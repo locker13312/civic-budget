@@ -1,6 +1,7 @@
 name: check
 
-# хуки можна обійти через --no-verify, тому той самий make check іде на кожен PR
+# хуки можна обійти через --no-verify, тому той самий make check іде на кожен PR;
+# Windows у матриці, бо студент працює на Windows (Git Bash + make)
 on:
   pull_request:
   push:
@@ -8,13 +9,23 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
           cache: npm
+      - name: make на Windows
+        if: runner.os == 'Windows'
+        run: choco install make --no-progress -y
       - name: setup
         run: make setup
       - name: check
@@ -23,5 +34,5 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: check-report
+          name: check-report-${{ matrix.os }}
           path: check.log
