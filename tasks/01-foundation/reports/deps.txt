@@ -1,0 +1,6 @@
+# make deps
+# коміт: 0603a1280ee5, дата: 2026-10-14 07:56 UTC
+# відтворити: make deps
+
+npm run --silent deps
+knip: зауважень немає

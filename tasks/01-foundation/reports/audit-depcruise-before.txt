@@ -1,0 +1,21 @@
+# dependency-cruiser з чернеткою правил R1, R2, R4 (до виправлень)
+# коміт: 2451e44b9e35, дата: 2026-10-14
+# відтворити: git worktree add /tmp/before 2451e44b9e35 && cd /tmp/before && npm ci && npx dependency-cruiser@18 src --config <репозиторій>/tasks/01-foundation/reports/audit-depcruise-draft.cjs --output-type err
+
+
+  error R2-index-only: src/web/app.js → src/platform/build.js
+  error R2-index-only: src/voting/domain.js → src/projects/domain.js
+  error R2-index-only: src/voting/domain.js → src/platform/errors.js
+  error R2-index-only: src/voting/domain.js → src/identity/domain.js
+  error R2-index-only: src/voting/domain.js → src/cycles/domain.js
+  error R2-index-only: src/results/domain.js → src/voting/domain.js
+  error R2-index-only: src/results/domain.js → src/projects/domain.js
+  error R2-index-only: src/results/domain.js → src/platform/errors.js
+  error R2-index-only: src/results/domain.js → src/cycles/domain.js
+  error R2-index-only: src/projects/domain.js → src/platform/errors.js
+  error R2-index-only: src/projects/domain.js → src/identity/domain.js
+  error R2-index-only: src/projects/domain.js → src/cycles/domain.js
+  error R2-index-only: src/cycles/domain.js → src/platform/errors.js
+
+x 13 dependency violations (13 errors, 0 warnings). 21 modules, 29 dependencies cruised.
+

@@ -1,0 +1,16 @@
+# граф залежностей між модулями (dependency-cruiser --collapse, до виправлень)
+# коміт: 2451e44b9e35
+
+cycles -> platform
+projects -> cycles
+projects -> identity
+projects -> platform
+results -> cycles
+results -> platform
+results -> projects
+results -> voting
+voting -> cycles
+voting -> identity
+voting -> platform
+voting -> projects
+web -> platform

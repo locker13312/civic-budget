@@ -1,0 +1,6 @@
+# документи перевіряє scripts/check-docs.js, таблиці markdown форматуємо вручну
+*.md
+package-lock.json
+dist/
+coverage/
+tasks/**/reports/
