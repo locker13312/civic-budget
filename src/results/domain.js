@@ -1,12 +1,11 @@
 import { Phase, phaseAt } from '../cycles/index.js';
 import { DomainError } from '../platform/index.js';
 import { ProjectStatus } from '../projects/index.js';
-import { countVotes } from '../voting/index.js';
 
 /**
  * @typedef {import('../cycles/index.js').Cycle} Cycle
  * @typedef {import('../projects/index.js').Project} Project
- * @typedef {import('../voting/index.js').Vote} Vote
+ * @typedef {import('../voting/index.js').VoteCounts} VoteCounts
  */
 
 export class TallyError extends DomainError {
@@ -26,18 +25,19 @@ export class TallyError extends DomainError {
 
 /**
  * Сценарій 4: переможці кожної категорії в межах її бюджету.
+ * counts дає voting (countVotes): results не вирішує, який голос
+ * зараховується, і не бачить окремих голосів.
  *
  * @param {Cycle} cycle
  * @param {ReadonlyArray<Project>} projects
- * @param {ReadonlyArray<Vote>} votes
+ * @param {VoteCounts} counts
  * @param {Date} now
  * @returns {Outcome[]}
  */
-export function tally(cycle, projects, votes, now) {
+export function tally(cycle, projects, counts, now) {
   if (phaseAt(cycle, now) !== Phase.RESULTS) {
     throw new TallyError('підрахунок можливий лише після кінця голосування');
   }
-  const counts = countVotes(votes.filter((v) => v.cycleId === cycle.id));
   /**
    * @param {Project} p
    * @returns {number}

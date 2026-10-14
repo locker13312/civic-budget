@@ -89,9 +89,9 @@ describe('[AC-1.7] голосування', () => {
     );
   });
 
-  test('підрахунок голосів по проєктах', () => {
+  test('підрахунок голосів по проєктах свого раунду', () => {
     assert.deepEqual(
-      countVotes([voteFor(1), voteFor(2), voteFor(1)]),
+      countVotes([voteFor(1), voteFor(2), voteFor(1), voteFor(1, 99)], 1),
       new Map([
         [1, 2],
         [2, 1],

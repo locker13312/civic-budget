@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync } from 'node:fs';
 import { describe, test } from 'node:test';
 
 import { Category } from '../../src/cycles/index.js';
@@ -26,13 +27,11 @@ function project(id, cost, { status = ProjectStatus.APPROVED, minutes = 0 } = {}
 }
 
 /**
- * @param {number} projectId
- * @param {number} n
+ * @param {Record<number, number>} byProject
+ * @returns {import('../../src/voting/index.js').VoteCounts}
  */
-function votes(projectId, n) {
-  return Array.from({ length: n }, (_, i) =>
-    Object.freeze({ voterId: 1000 + i, projectId, cycleId: 1, castAt: IN_VOTING }),
-  );
+function counts(byProject) {
+  return new Map(Object.entries(byProject).map(([id, n]) => [Number(id), n]));
 }
 
 /** @param {import('../../src/results/index.js').Outcome[]} outcomes */
@@ -44,9 +43,7 @@ describe('[AC-1.7] підсумки', () => {
   test('переможці заповнюють бюджет за голосами, пропускаючи те, що не вміщається', () => {
     const cycle = testCycle({ smallBudget: 100_000, smallMaxCost: 60_000, minVotes: 1 });
     const projects = [project(1, 60_000), project(2, 50_000), project(3, 40_000)];
-    const all = [...votes(1, 10), ...votes(2, 8), ...votes(3, 5)];
-
-    const outcomes = tally(cycle, projects, all, IN_RESULTS);
+    const outcomes = tally(cycle, projects, counts({ 1: 10, 2: 8, 3: 5 }), IN_RESULTS);
 
     // 1 вміщається, 2 вже ні (60 + 50 > 100), 3 вміщається в залишок 40
     assert.deepEqual(funded(outcomes), new Set([1, 3]));
@@ -60,7 +57,7 @@ describe('[AC-1.7] підсумки', () => {
     const outcomes = tally(
       testCycle({ minVotes: 3 }),
       [project(1, 10_000)],
-      votes(1, 2),
+      counts({ 1: 2 }),
       IN_RESULTS,
     );
 
@@ -73,12 +70,7 @@ describe('[AC-1.7] підсумки', () => {
     const late = project(1, 60_000, { minutes: 5 });
     const early = project(2, 60_000, { minutes: 1 });
 
-    const outcomes = tally(
-      cycle,
-      [late, early],
-      [...votes(1, 4), ...votes(2, 4)],
-      IN_RESULTS,
-    );
+    const outcomes = tally(cycle, [late, early], counts({ 1: 4, 2: 4 }), IN_RESULTS);
 
     assert.deepEqual(funded(outcomes), new Set([2]));
   });
@@ -89,7 +81,7 @@ describe('[AC-1.7] підсумки', () => {
     const outcomes = tally(
       testCycle({ minVotes: 0 }),
       [project(1, 10_000), rejected],
-      [],
+      counts({}),
       IN_RESULTS,
     );
 
@@ -102,7 +94,7 @@ describe('[AC-1.7] підсумки', () => {
   test('повторний підрахунок дає той самий результат', () => {
     const cycle = testCycle({ minVotes: 1 });
     const projects = [project(1, 30_000), project(2, 30_000)];
-    const all = [...votes(1, 3), ...votes(2, 3)];
+    const all = counts({ 1: 3, 2: 3 });
 
     assert.deepEqual(
       tally(cycle, projects, all, IN_RESULTS),
@@ -111,6 +103,22 @@ describe('[AC-1.7] підсумки', () => {
   });
 
   test('до кінця голосування підрахунок заборонений', () => {
-    assert.throws(() => tally(testCycle(), [], [], IN_VOTING), TallyError);
+    assert.throws(() => tally(testCycle(), [], counts({}), IN_VOTING), TallyError);
   });
+});
+
+test('[AC-1.11] results бере з voting лише кількості голосів', () => {
+  const dir = new URL('../../src/results/', import.meta.url);
+  const sources = readdirSync(dir)
+    .filter((file) => file.endsWith('.js'))
+    .map((file) => readFileSync(new URL(file, dir), 'utf8'))
+    .join('\n');
+
+  const runtime = [...sources.matchAll(/from '\.\.\/voting\/[^']+'/g)];
+  const types = new Set(
+    [...sources.matchAll(/import\('\.\.\/voting\/index\.js'\)\.(\w+)/g)].map((m) => m[1]),
+  );
+
+  assert.deepEqual(runtime, [], 'results не викликає функцій voting');
+  assert.deepEqual(types, new Set(['VoteCounts']));
 });

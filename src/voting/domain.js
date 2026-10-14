@@ -60,13 +60,25 @@ export function castVote({ voter, project, cycle, voterVotes, now }) {
 }
 
 /**
- * @param {Iterable<Vote>} votes
- * @returns {Map<number, number>}
+ * Кількість зарахованих голосів: projectId -> голоси.
+ *
+ * @typedef {ReadonlyMap<number, number>} VoteCounts
  */
-export function countVotes(votes) {
+
+/**
+ * Зараховані голоси раунду; правило зарахування живе лише тут.
+ *
+ * @param {Iterable<Vote>} votes
+ * @param {number} cycleId
+ * @returns {VoteCounts}
+ */
+export function countVotes(votes, cycleId) {
+  /** @type {Map<number, number>} */
   const counts = new Map();
   for (const vote of votes) {
-    counts.set(vote.projectId, (counts.get(vote.projectId) ?? 0) + 1);
+    if (vote.cycleId === cycleId) {
+      counts.set(vote.projectId, (counts.get(vote.projectId) ?? 0) + 1);
+    }
   }
   return counts;
 }
