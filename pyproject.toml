@@ -1,0 +1,56 @@
+[project]
+name = "civic-budget"
+version = "0.1.0"
+description = "Громадський бюджет міста: подання проєктів, модерація, голосування, підсумки"
+readme = "README.md"
+authors = [
+    { name = "Литвиненко Ілля", email = "litvinenko7b@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.143.0",
+    "pydantic-settings>=2.15.0",
+    "sqlalchemy>=2.1.4",
+    "uvicorn>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+    "mypy>=2.4.0",
+    "pytest>=9.1.1",
+    "ruff>=0.17.0",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "N", "PT", "RUF"]
+# українські літери в рядках і коментарях не є помилкою
+ignore = ["RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["civic_budget"]
+
+[tool.mypy]
+strict = true
+python_version = "3.13"
+files = ["src", "tests", "scripts"]
+mypy_path = "src"
+explicit_package_bases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "smoke: мінімальна перевірка, що застосунок стартує (запускається в pre-commit)",
+    "ac(id): тест перевіряє критерій прийняття з spec інкременту",
+    "hooks: тести git-хуків у тимчасовому репозиторії (повільні)",
+]
