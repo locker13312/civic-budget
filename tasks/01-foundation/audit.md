@@ -89,4 +89,23 @@ AI обрав найкоротший шлях.
 ## 3. Виправлення
 
 Кожен пункт виправлено зміною spec, стандарту або перевірки; код змінено
-вже під нову перевірку. Коміти і звіти після виправлень додаються нижче.
+вже під нову перевірку, тому повторити помилку не дасть конвеєр.
+
+| # | Додаткова spec (що змінилось у правилах) | Чим перевіряється | Коміт |
+|---|---|---|---|
+| 1 | R1, R2, R4 стали контрактами в `pyproject.toml`; `make contracts` у pre-commit, pre-push і CI; критерій AC-1.9; [ADR-0005](../../adr/0005-module-boundaries-import-linter.md) | `make contracts`, тест, що контракти покривають кожен модуль spec, тест хука з імпортом у чужий модуль | [`5853e29`](https://github.com/locker13312/civic-budget/commit/5853e29735a4aeefcb17cc4d9fa6e575029be4bf) |
+| 2 | Розділ «Залежності» в [code-style.md](../../standards/code-style.md); `make deps` у [checks.md](../../standards/checks.md); критерій AC-1.10 | `make deps` (deptry) у pre-push і CI | [`1915fb1`](https://github.com/locker13312/civic-budget/commit/1915fb1e5b68a04724c7b5ed25935f8ad338eb65) |
+| 3 | R3 і сценарій 4 у [spec.md](../../spec.md): інші модулі отримують результат правил власника; критерій AC-1.11 | тест: `results` імпортує з `voting` лише `VoteCounts` | [`b14ecc2`](https://github.com/locker13312/civic-budget/commit/b14ecc23882891391bfebd9192f398a55099ba8d) |
+
+Після виправлень: 9 із 9 контрактів дотримано
+([reports/contracts.txt](reports/contracts.txt)), deptry без зауважень
+([reports/deps.txt](reports/deps.txt)), `make check` зелений
+([reports/check.txt](reports/check.txt)).
+
+## 4. Що лишилось свідомо
+
+- R3 загалом import-linter не бачить: правило «читати через API власника»
+  тримається на тестах і рев'ю (див. наслідки ADR-0005). У Завданні 2 з
+  БД перевіримо, що кожну таблицю пише один модуль.
+- Хук pre-push перевіряє лише верхній коміт кожної гілки, а не кожен
+  проміжний. Для навчального проєкту цього достатньо, CI перевіряє PR.

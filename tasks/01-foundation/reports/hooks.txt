@@ -1,0 +1,18 @@
+# тести git-хуків
+# коміт: 9a9ef99ab67e, дата: 2026-10-14 07:32 UTC
+# відтворити: .venv/bin/python -m pytest tests/hooks -vv
+
+============================= test session starts ==============================
+platform linux -- Python 3.13.16, pytest-9.1.1, pluggy-1.6.0 -- /home/claude/civic-budget/.venv/bin/python
+rootdir: /home/claude/civic-budget
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 5 items
+
+tests/hooks/test_hooks.py::test_pre_commit_blocks_dirty_and_passes_clean PASSED [ 20%]
+tests/hooks/test_hooks.py::test_pre_commit_ignores_unstaged_dirty_changes PASSED [ 40%]
+tests/hooks/test_hooks.py::test_pre_commit_checks_staged_not_working_copy PASSED [ 60%]
+tests/hooks/test_hooks.py::test_pre_push_runs_full_check PASSED          [ 80%]
+tests/hooks/test_hooks.py::test_pre_commit_blocks_import_into_other_module_internals PASSED [100%]
+
+============================== 5 passed in 10.42s ==============================

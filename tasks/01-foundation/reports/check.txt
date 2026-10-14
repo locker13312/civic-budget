@@ -1,0 +1,40 @@
+# make check
+# коміт: 9a9ef99ab67e, дата: 2026-10-14 07:32 UTC
+# відтворити: make check
+
+.venv/bin/ruff format --check .
+52 files already formatted
+.venv/bin/ruff check .
+All checks passed!
+.venv/bin/lint-imports --no-logo
+
+---------
+Contracts
+---------
+
+Analyzed 29 files, 48 dependencies.
+-----------------------------------
+
+R1: модулі залежать лише згори вниз KEPT
+R2: web лише через пакет KEPT
+R2: results лише через пакет KEPT
+R2: voting лише через пакет KEPT
+R2: projects лише через пакет KEPT
+R2: identity лише через пакет KEPT
+R2: cycles лише через пакет KEPT
+R2: platform лише через пакет KEPT
+R4: fastapi лише у web KEPT
+
+Contracts: 9 kept, 0 broken.
+.venv/bin/mypy
+Success: no issues found in 32 source files
+.venv/bin/deptry src
+Scanning 17 files...
+
+Success! No dependency issues found.
+.venv/bin/python scripts/check_docs.py
+check_docs: spec, ADR, DEFENSE і трасування критеріїв у порядку
+.venv/bin/python -m pytest
+.....................................................                    [100%]
+53 passed in 10.42s
+uv build --quiet --out-dir dist

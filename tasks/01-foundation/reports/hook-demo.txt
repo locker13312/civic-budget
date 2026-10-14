@@ -1,0 +1,26 @@
+# демо: хук блокує брудний коміт
+# коміт: 9a9ef99ab67e, дата: 2026-10-14 07:32 UTC
+# відтворити: scripts/report.sh (розділ 3а)
+
+$ cat src/civic_budget/platform/dirty.py
+import os,sys
+x=1
+$ git add src/civic_budget/platform/dirty.py && git commit -m dirty
+/home/claude/civic-budget/.venv/bin/ruff format --check .
+unformatted: File would be reformatted
+ --> src/civic_budget/platform/dirty.py:1:11
+  |
+  - import os,sys
+  - x=1
+1 + import os, sys
+2 +
+3 + x = 1
+  |
+
+1 file would be reformatted, 52 files already formatted
+make[1]: *** [Makefile:20: fmt-check] Error 1
+
+pre-commit: коміт відхилено. Виправте (make fmt) і знову git add.
+код виходу: 1
+$ git log --oneline -1   # нового коміту немає
+9a9ef99 build: make report writes run artifacts for the task

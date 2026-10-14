@@ -1,0 +1,8 @@
+# запущений застосунок
+# коміт: 9a9ef99ab67e, дата: 2026-10-14 07:32 UTC
+# відтворити: make run, потім curl /health і /version
+
+$ curl -s http://127.0.0.1:8765/health
+{"status":"ok"}
+$ curl -s http://127.0.0.1:8765/version
+{"version":"0.1.0","sha":"9a9ef99ab67e"}

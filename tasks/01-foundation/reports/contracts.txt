@@ -1,0 +1,23 @@
+# make contracts
+# коміт: 9a9ef99ab67e, дата: 2026-10-14 07:32 UTC
+# відтворити: make contracts
+
+
+---------
+Contracts
+---------
+
+Analyzed 29 files, 48 dependencies.
+-----------------------------------
+
+R1: модулі залежать лише згори вниз KEPT
+R2: web лише через пакет KEPT
+R2: results лише через пакет KEPT
+R2: voting лише через пакет KEPT
+R2: projects лише через пакет KEPT
+R2: identity лише через пакет KEPT
+R2: cycles лише через пакет KEPT
+R2: platform лише через пакет KEPT
+R4: fastapi лише у web KEPT
+
+Contracts: 9 kept, 0 broken.
