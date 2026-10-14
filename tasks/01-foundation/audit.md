@@ -88,4 +88,28 @@ AI обрав найкоротший шлях.
 ## 3. Виправлення
 
 Кожен пункт виправлено зміною spec, стандарту або перевірки; код змінено
-вже під нову перевірку. Коміти і звіти після виправлень додаються нижче.
+вже під нову перевірку, тому повторити помилку не дасть конвеєр.
+
+| # | Додаткова spec (що змінилось у правилах) | Чим перевіряється | Коміт |
+|---|---|---|---|
+| 1 | R1, R2, R4 стали правилами `.dependency-cruiser.cjs`; `make boundaries` у pre-commit, pre-push і CI; критерій AC-1.9; [ADR-0005](../../adr/0005-module-boundaries-dependency-cruiser.md) | `make boundaries`, тест, що правила покривають кожен модуль spec, тест хука з імпортом у чужий модуль | [`b15a87f`](https://github.com/locker13312/civic-budget/commit/b15a87f3ba5a7de3d7ba2e4cf454bb780d808da5) |
+| 2 | Розділ «Залежності» в [code-style.md](../../standards/code-style.md); `make deps` у [checks.md](../../standards/checks.md); критерій AC-1.10 | `make deps` (knip) у pre-push і CI | [`03bd72b`](https://github.com/locker13312/civic-budget/commit/03bd72bec3e85b64e6c1db92517223992fa1e94d) |
+| 3 | R3 і сценарій 4 у [spec.md](../../spec.md): інші модулі отримують результат правил власника; критерій AC-1.11 | тест: `results` бере з `voting` лише тип `VoteCounts` | [`03488d9`](https://github.com/locker13312/civic-budget/commit/03488d9658fb84aee709e499c5cfd2a5b6fe4553) |
+
+Після виправлень: правила меж без порушень
+([reports/boundaries.txt](reports/boundaries.txt)), knip без зауважень
+([reports/deps.txt](reports/deps.txt)), `make check` зелений
+([reports/check.txt](reports/check.txt)).
+
+Побічний результат: щойно knip увійшов у `make check`, тест AC-1.4 почав
+падати з хибної причини (його тимчасовий файл був невикористаним, і knip
+відхиляв push навіть після виправлення типів). Тест виправлено в
+[`0603a12`](https://github.com/locker13312/civic-budget/commit/0603a1280ee5def3741bc1b8f60b20a557228e02).
+
+## 4. Що лишилось свідомо
+
+- R3 загалом граф імпортів не бачить: правило «читати через API власника»
+  тримається на тестах і рев'ю (див. наслідки ADR-0005). У Завданні 2 з
+  БД перевіримо, що кожну таблицю пише один модуль.
+- Хук pre-push перевіряє лише верхній коміт кожної гілки, а не кожен
+  проміжний. Для навчального проєкту цього достатньо, CI перевіряє PR.

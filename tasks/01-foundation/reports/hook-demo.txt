@@ -1,0 +1,18 @@
+# демо: хук блокує брудний коміт
+# коміт: 0603a1280ee5, дата: 2026-10-14 07:56 UTC
+# відтворити: scripts/report.sh (розділ 3а)
+
+$ cat src/platform/dirty.js
+const x=1
+export default x
+$ git add src/platform/dirty.js && git commit -m dirty
+npm run --silent fmt-check
+Checking formatting...
+[warn] src/platform/dirty.js
+[warn] Code style issues found in the above file. Run Prettier with --write to fix.
+make[1]: *** [Makefile:14: fmt-check] Error 1
+
+pre-commit: коміт відхилено. Виправте (make fmt) і знову git add.
+код виходу: 1
+$ git log --oneline -1   # нового коміту немає
+0603a12 test(hooks): push test breaks types in a used file
