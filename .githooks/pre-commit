@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# перевіряє знімок індексу, тобто рівно те, що піде в коміт (adr/0004)
+set -euo pipefail
+
+root=$(git rev-parse --show-toplevel)
+modules="${CIVIC_NODE_MODULES:-$root/node_modules}"
+if [ ! -d "$modules" ]; then
+  echo "pre-commit: немає $modules, запустіть make setup" >&2
+  exit 1
+fi
+
+snap=$(mktemp -d)
+trap 'rm -rf "$snap"' EXIT
+git checkout-index --all --prefix="$snap/"
+ln -s "$modules" "$snap/node_modules"
+
+if ! make -C "$snap" --no-print-directory pre-commit; then
+  echo >&2
+  echo "pre-commit: коміт відхилено. Виправте (make fmt) і знову git add." >&2
+  exit 1
+fi
