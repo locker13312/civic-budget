@@ -1,0 +1,10 @@
+# knip: зайві залежності й експорти (до виправлень)
+# коміт: 2451e44b9e35, дата: 2026-10-14
+# відтворити: git worktree add /tmp/before 2451e44b9e35 && cd /tmp/before && npm ci && npx knip@6
+# (рядок про audit-depcruise-draft.cjs стосується самого файлу аудиту, його пропускаємо)
+
+Unused dependencies (1)
+pg  package.json:38:6
+Unused exports (2)
+limitFor    src/cycles/index.js:6:3   
+isVerified  src/identity/index.js:2:16
