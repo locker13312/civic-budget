@@ -1,7 +1,7 @@
 // хуки перевіряються на справжньому git у тимчасовому репозиторії
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +14,10 @@ const SKIP = new Set(['.git', 'node_modules', 'dist', 'coverage']);
 const DIRTY = 'const x=1\nexport default x\n';
 const CLEAN = 'const x = 1;\nexport default x;\n';
 // формат і лінтер чисті, tsc ні
-const TYPE_ERROR = "/** @type {number} */\nconst x = 'один';\nexport default x;\n";
+// формат, лінтер і knip чисті, tsc ні; дописується в наявний файл, бо новий
+// невикористаний файл knip у pre-push теж відхилить
+const TYPE_ERROR = "\n/** @type {number} */\nconst answer = 'один';\nvoid answer;\n";
+const USED_FILE = 'src/platform/config.js';
 const NEW_FILE = 'src/platform/sample.js';
 // формат і лінтер чисті, порушено лише R2
 const SHORTCUT =
@@ -64,6 +67,11 @@ function sandbox() {
    * @param {string} text
    */
   const write = (file, text) => writeFileSync(join(path, file), text);
+  /**
+   * @param {string} file
+   * @param {string} text
+   */
+  const append = (file, text) => appendFileSync(join(path, file), text);
   /** @param {string} message */
   const commit = (message) => git('commit', '-m', message);
 
@@ -73,7 +81,7 @@ function sandbox() {
   const first = git('-c', 'core.hooksPath=/dev/null', 'commit', '-q', '-m', 'init');
   assert.equal(first.code, 0, first.output);
   git('config', 'core.hooksPath', '.githooks');
-  return { base, git, write, commit };
+  return { base, git, write, append, commit };
 }
 
 describe('git-хуки', { skip: nested && 'вкладений запуск з тесту хуків' }, () => {
@@ -126,8 +134,8 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     repo.git('remote', 'add', 'origin', remote);
 
     // pre-commit пропускає (формат і лінтер чисті), ловить лише tsc
-    repo.write(NEW_FILE, TYPE_ERROR);
-    repo.git('add', NEW_FILE);
+    repo.append(USED_FILE, TYPE_ERROR);
+    repo.git('add', USED_FILE);
     assert.equal(repo.commit('type error').code, 0);
 
     const rejected = repo.git('push', 'origin', 'main');
@@ -135,8 +143,8 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     assert.notEqual(rejected.code, 0);
     assert.match(rejected.output, /push відхилено/);
 
-    repo.write(NEW_FILE, TYPE_ERROR.replace('{number}', '{string}'));
-    repo.git('add', NEW_FILE);
+    repo.git('checkout', 'HEAD~1', '--', USED_FILE);
+    repo.git('add', USED_FILE);
     assert.equal(repo.commit('fix types').code, 0);
 
     const accepted = repo.git('push', 'origin', 'main');
