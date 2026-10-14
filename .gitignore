@@ -1,0 +1,13 @@
+# залежності і збірка
+node_modules/
+dist/
+*.tgz
+
+# кеші інструментів
+.eslintcache
+coverage/
+
+# локальне
+.env
+.idea/
+.DS_Store
