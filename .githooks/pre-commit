@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# перевіряє знімок індексу, тобто рівно те, що піде в коміт (adr/0004)
+set -euo pipefail
+
+root=$(git rev-parse --show-toplevel)
+export VENV="${VENV:-$root/.venv}"
+if [ ! -x "$VENV/bin/python" ]; then
+  echo "pre-commit: немає оточення $VENV, запустіть make setup" >&2
+  exit 1
+fi
+
+snap=$(mktemp -d)
+trap 'rm -rf "$snap"' EXIT
+git checkout-index --all --prefix="$snap/"
+
+export PYTHONPATH="$snap/src"
+export MYPY_CACHE_DIR="$root/.mypy_cache"
+
+if ! make -C "$snap" --no-print-directory pre-commit; then
+  echo >&2
+  echo "pre-commit: коміт відхилено. Виправте (make fmt) і знову git add." >&2
+  exit 1
+fi

@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# повний make check для кожного коміту, що пушиться (adr/0004)
+set -euo pipefail
+
+root=$(git rev-parse --show-toplevel)
+export VENV="${VENV:-$root/.venv}"
+if [ ! -x "$VENV/bin/python" ]; then
+  echo "pre-push: немає оточення $VENV, запустіть make setup" >&2
+  exit 1
+fi
+export MYPY_CACHE_DIR="$root/.mypy_cache"
+
+zero=$(git hash-object --stdin </dev/null | tr '0-9a-f' '0')
+failed=0
+
+while read -r _local_ref local_sha remote_ref _remote_sha; do
+  # видалення гілки на сервері перевіряти нічого
+  [ "$local_sha" = "$zero" ] && continue
+
+  snap=$(mktemp -d)
+  git archive "$local_sha" | tar -x -C "$snap"
+  echo "pre-push: make check для ${local_sha:0:12} -> $remote_ref" >&2
+  if ! PYTHONPATH="$snap/src" GIT_SHA="$local_sha" \
+      make -C "$snap" --no-print-directory check; then
+    failed=1
+  fi
+  rm -rf "$snap"
+done
+
+if [ "$failed" -ne 0 ]; then
+  echo >&2
+  echo "pre-push: push відхилено, make check не проходить." >&2
+  exit 1
+fi
