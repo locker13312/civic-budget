@@ -4,10 +4,9 @@ VENV ?= .venv
 BIN := $(VENV)/bin
 PY := $(BIN)/python
 TASK ?= 01-foundation
-REPORTS := tasks/$(TASK)/reports
 
 .PHONY: setup fmt fmt-check lint types contracts deps docs smoke test build \
-	check pre-commit run clean
+	check pre-commit run report clean
 
 setup:
 	uv sync --frozen
@@ -27,7 +26,7 @@ types:
 	$(BIN)/mypy
 
 contracts:
-	$(BIN)/lint-imports
+	$(BIN)/lint-imports --no-logo
 
 deps:
 	$(BIN)/deptry src
@@ -50,6 +49,9 @@ check: fmt-check lint contracts types deps docs test build
 
 run:
 	GIT_SHA=$$(git rev-parse --short=12 HEAD) $(BIN)/uvicorn --factory civic_budget.web:create_app
+
+report:
+	scripts/report.sh $(TASK)
 
 clean:
 	rm -rf dist .mypy_cache .ruff_cache .pytest_cache
