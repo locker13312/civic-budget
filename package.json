@@ -1,0 +1,49 @@
+{
+  "name": "civic-budget",
+  "version": "0.1.0",
+  "description": "Громадський бюджет міста: подання проєктів, модерація, голосування, підсумки",
+  "main": "src/server.js",
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks || true",
+    "start": "node src/server.js",
+    "fmt": "prettier --write . && eslint --fix .",
+    "fmt-check": "prettier --check .",
+    "lint": "eslint --max-warnings 0 .",
+    "types": "tsc -p tsconfig.json",
+    "docs": "node scripts/check-docs.js",
+    "smoke": "node --test --test-reporter=spec \"test/smoke/*.test.js\"",
+    "test": "node --test --test-reporter=spec \"test/**/*.test.js\"",
+    "build": "mkdir -p dist && npm pack --pack-destination dist --silent"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/locker13312/civic-budget.git"
+  },
+  "author": "Литвиненко Ілля <litvinenko7b@gmail.com>",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/locker13312/civic-budget/issues"
+  },
+  "homepage": "https://github.com/locker13312/civic-budget#readme",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "fastify": "^5.12.7",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.5",
+    "eslint": "^10.12.0",
+    "eslint-plugin-jsdoc": "^63.3.3",
+    "globals": "^17.13.0",
+    "prettier": "^3.9.10",
+    "typescript": "^7.0.2"
+  }
+}
