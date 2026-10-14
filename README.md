@@ -16,14 +16,20 @@
 
 ## Швидкий старт
 
-Потрібні Node.js 22, `git`, `make` і `bash` (Linux, macOS або WSL; на Windows
-підходить Git Bash).
+Потрібні Node.js 22+, `git`, `make` і `bash`. CI перевіряє проєкт на Linux і
+Windows.
 
 ```bash
 make setup     # npm ci + git-хуки
-make check     # усі перевірки: формат, лінтер, типи, документи, тести, збірка
+make check     # усі перевірки: формат, лінтер, межі, типи, залежності, документи, тести, збірка
 make run       # http://127.0.0.1:3000/health і /version
 ```
+
+На Windows: встановіть [Node.js LTS](https://nodejs.org), [Git for
+Windows](https://git-scm.com/download/win) і make (`winget install
+ezwinports.make` у PowerShell), а команди `make` запускайте з **Git Bash**.
+Переноси рядків задає `.gitattributes`, тож налаштовувати `core.autocrlf`
+не треба.
 
 ## Де що лежить
 
