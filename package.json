@@ -14,7 +14,8 @@
     "smoke": "node --test --test-reporter=spec \"test/smoke/*.test.js\"",
     "test": "node --test --test-reporter=spec \"test/**/*.test.js\"",
     "build": "mkdir -p dist && npm pack --pack-destination dist --silent",
-    "boundaries": "depcruise src --config .dependency-cruiser.cjs --output-type err"
+    "boundaries": "depcruise src --config .dependency-cruiser.cjs --output-type err",
+    "deps": "knip --no-progress"
   },
   "repository": {
     "type": "git",
@@ -35,8 +36,7 @@
     "src"
   ],
   "dependencies": {
-    "fastify": "^5.12.7",
-    "pg": "^8.23.1"
+    "fastify": "^5.12.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -45,6 +45,7 @@
     "eslint": "^10.12.0",
     "eslint-plugin-jsdoc": "^63.3.3",
     "globals": "^17.13.0",
+    "knip": "^6.41.0",
     "prettier": "^3.9.10",
     "typescript": "^7.0.2"
   }

@@ -15,8 +15,9 @@
 | 6 | Документи: spec, ADR, DEFENSE, трасування критеріїв | `scripts/check-docs.js` | `docs` | ні | так | так |
 | 7 | Усі тести | `node --test` | `test` | ні | так | так |
 | 8 | Збирання пакета | `npm pack` | `build` | ні | так | так |
+| 9 | Залежності й експорти: немає зайвих і неоголошених | `knip` | `deps` | ні | так | так |
 
-`make check` = 1–8. `make pre-commit` = 1–4.
+`make check` = 1–9. `make pre-commit` = 1–4.
 
 ## Чому так розподілено
 
