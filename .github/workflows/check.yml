@@ -1,0 +1,24 @@
+name: check
+
+# хуки можна обійти через --no-verify, тому той самий make check іде на кожен PR
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - name: setup
+        run: make setup
+      - name: check
+        run: make check 2>&1 | tee check.log
+        shell: bash -o pipefail {0}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: check-report
+          path: check.log
