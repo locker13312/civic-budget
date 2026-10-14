@@ -3,11 +3,18 @@
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
-modules="${CIVIC_NODE_MODULES:-$root/node_modules}"
-if [ ! -d "$modules" ]; then
-  echo "pre-push: немає $modules, запустіть make setup" >&2
-  exit 1
-fi
+# знімок кладемо всередину .git: node шукає node_modules вгору по дереву і
+# знаходить теку проєкту без посилань (у Git Bash на Windows ln -s копіює теку)
+gitdir=$(git rev-parse --absolute-git-dir)
+# node_modules проєкту або вище по дереву (тести хуків живуть у підтеці)
+dir=$root
+until [ -d "$dir/node_modules" ]; do
+  if [ "$(dirname "$dir")" = "$dir" ]; then
+    echo "pre-push: немає node_modules, запустіть make setup" >&2
+    exit 1
+  fi
+  dir=$(dirname "$dir")
+done
 
 zero=$(git hash-object --stdin </dev/null | tr '0-9a-f' '0')
 failed=0
@@ -16,9 +23,8 @@ while read -r _local_ref local_sha remote_ref _remote_sha; do
   # видалення гілки на сервері перевіряти нічого
   [ "$local_sha" = "$zero" ] && continue
 
-  snap=$(mktemp -d)
+  snap=$(mktemp -d "$gitdir/civic-snap.XXXXXX")
   git archive "$local_sha" | tar -x -C "$snap"
-  ln -s "$modules" "$snap/node_modules"
   echo "pre-push: make check для ${local_sha:0:12} -> $remote_ref" >&2
   if ! GIT_SHA="$local_sha" make -C "$snap" --no-print-directory check; then
     failed=1

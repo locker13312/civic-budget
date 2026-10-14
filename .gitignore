@@ -7,6 +7,9 @@ dist/
 .eslintcache
 coverage/
 
+# тимчасові репозиторії тестів хуків і демо (scripts/report.sh)
+.civic-tmp-*/
+
 # локальне
 .env
 .idea/

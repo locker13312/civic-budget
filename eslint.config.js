@@ -3,7 +3,7 @@ import jsdoc from 'eslint-plugin-jsdoc';
 import globals from 'globals';
 
 export default [
-  { ignores: ['dist/', 'coverage/'] },
+  { ignores: ['dist/', 'coverage/', '.civic-tmp-*/'] },
   js.configs.recommended,
   jsdoc.configs['flat/recommended-typescript-flavor'],
   {
