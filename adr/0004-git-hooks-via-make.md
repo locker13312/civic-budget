@@ -14,8 +14,7 @@ decision-makers: Литвиненко Ілля
 
 ## Розглянуті варіанти
 
-* Bash-хуки в `.githooks/` (через `core.hooksPath`), що викликають make-цілі
-  на знімку індексу або коміту
+* Bash-хуки в `.githooks/`, що викликають make-цілі на знімку
 * Фреймворк pre-commit (`.pre-commit-config.yaml`)
 * lefthook
 
@@ -23,7 +22,9 @@ decision-makers: Литвиненко Ілля
 
 Обрано: «Bash-хуки в `.githooks/`, що викликають make-цілі на знімку», бо
 одні й ті самі make-цілі запускають людина, хук і CI, і хук перевіряє рівно
-вміст коміту.
+вміст коміту. Хуки вмикаються через `git config core.hooksPath .githooks`
+(`make setup`). pre-commit перевіряє знімок індексу (`git checkout-index`),
+pre-push перевіряє коміт, що пушиться (`git archive`).
 
 ### Наслідки
 
