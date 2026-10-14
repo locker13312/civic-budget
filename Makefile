@@ -5,7 +5,7 @@ NPM := npm run --silent
 TASK ?= 01-foundation
 
 .PHONY: setup fmt fmt-check lint boundaries types deps docs smoke test build \
-	check pre-commit run clean
+	check pre-commit run report clean
 
 setup:
 	npm ci
@@ -19,6 +19,9 @@ check: fmt-check lint boundaries types deps docs test build
 
 run:
 	GIT_SHA=$$(git rev-parse --short=12 HEAD) node src/server.js
+
+report:
+	scripts/report.sh $(TASK)
 
 clean:
 	rm -rf dist coverage
