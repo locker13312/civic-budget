@@ -5,7 +5,7 @@ from datetime import datetime
 from civic_budget.cycles import Cycle, Phase
 from civic_budget.platform import DomainError
 from civic_budget.projects import Project, ProjectStatus
-from civic_budget.voting import Vote, count_votes
+from civic_budget.voting import VoteCounts
 
 
 class TallyError(DomainError):
@@ -24,14 +24,17 @@ class Outcome:
 def tally(
     cycle: Cycle,
     projects: Sequence[Project],
-    votes: Sequence[Vote],
+    counts: VoteCounts,
     now: datetime,
 ) -> list[Outcome]:
-    """Сценарій 4: переможці кожної категорії в межах її бюджету."""
+    """Сценарій 4: переможці кожної категорії в межах її бюджету.
+
+    counts дає voting (count_votes): results не вирішує, який голос
+    зараховується, і не бачить окремих голосів.
+    """
     if cycle.phase_at(now) is not Phase.RESULTS:
         raise TallyError("підрахунок можливий лише після кінця голосування")
 
-    counts = count_votes(v for v in votes if v.cycle_id == cycle.id)
     outcomes: list[Outcome] = []
     for limit in cycle.limits:
         candidates = [

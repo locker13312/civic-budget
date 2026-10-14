@@ -110,5 +110,7 @@ def test_unverified_resident_cannot_vote(cycle: Cycle) -> None:
         )
 
 
-def test_count_votes_per_project() -> None:
-    assert count_votes([vote_for(1), vote_for(2), vote_for(1)]) == {1: 2, 2: 1}
+def test_count_votes_per_project_of_cycle() -> None:
+    votes = [vote_for(1), vote_for(2), vote_for(1), vote_for(1, cycle_id=99)]
+
+    assert count_votes(votes, cycle_id=1) == {1: 2, 2: 1}

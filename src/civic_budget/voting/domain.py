@@ -1,5 +1,5 @@
 from collections import Counter
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -7,6 +7,9 @@ from civic_budget.cycles import Cycle, Phase
 from civic_budget.identity import User
 from civic_budget.platform import DomainError
 from civic_budget.projects import Project, ProjectStatus
+
+type VoteCounts = Mapping[int, int]
+"""Кількість зарахованих голосів: project_id -> голоси."""
 
 
 class VoteError(DomainError):
@@ -49,5 +52,6 @@ def cast_vote(
     )
 
 
-def count_votes(votes: Iterable[Vote]) -> dict[int, int]:
-    return dict(Counter(v.project_id for v in votes))
+def count_votes(votes: Iterable[Vote], cycle_id: int) -> VoteCounts:
+    """Зараховані голоси раунду; правило зарахування живе лише тут."""
+    return dict(Counter(v.project_id for v in votes if v.cycle_id == cycle_id))
