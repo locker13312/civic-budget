@@ -1,0 +1,88 @@
+# lint-imports з чернеткою контрактів R1, R2, R4 (до виправлень)
+# коміт: f34264695ee8, дата: 2026-10-14
+# відтворити: git worktree add /tmp/before f34264695ee8 && cd /tmp/before && uv run --with import-linter lint-imports --config <репозиторій>/tasks/01-foundation/reports/audit-contracts-draft.ini
+
+
+Analyzed 29 files, 48 dependencies.
+-----------------------------------
+
+R1: модулі залежать лише згори вниз KEPT
+R2: platform лише через пакет BROKEN
+R2: identity лише через пакет BROKEN
+R2: cycles лише через пакет BROKEN
+R2: projects лише через пакет BROKEN
+R2: voting лише через пакет BROKEN
+R2: results лише через пакет KEPT
+R4: fastapi лише у web KEPT
+
+Contracts: 3 kept, 5 broken.
+
+
+----------------
+Broken contracts
+----------------
+
+R2: platform лише через пакет
+-----------------------------
+
+Illegal imports of protected package civic_budget.platform.build
+(via civic_budget.platform.* expression):
+
+- civic_budget.web.app -> civic_budget.platform.build (l.5)
+
+Illegal imports of protected package civic_budget.platform.errors
+(via civic_budget.platform.* expression):
+
+- civic_budget.cycles.domain -> civic_budget.platform.errors (l.6)
+
+- civic_budget.projects.domain -> civic_budget.platform.errors (l.7)
+
+- civic_budget.results.domain -> civic_budget.platform.errors (l.6)
+
+- civic_budget.voting.domain -> civic_budget.platform.errors (l.8)
+
+
+R2: identity лише через пакет
+-----------------------------
+
+Illegal imports of protected package civic_budget.identity.domain
+(via civic_budget.identity.* expression):
+
+- civic_budget.projects.domain -> civic_budget.identity.domain (l.6)
+
+- civic_budget.voting.domain -> civic_budget.identity.domain (l.7)
+
+
+R2: cycles лише через пакет
+---------------------------
+
+Illegal imports of protected package civic_budget.cycles.domain
+(via civic_budget.cycles.* expression):
+
+- civic_budget.projects.domain -> civic_budget.cycles.domain (l.5)
+
+- civic_budget.results.domain -> civic_budget.cycles.domain (l.5)
+
+- civic_budget.voting.domain -> civic_budget.cycles.domain (l.6)
+
+
+R2: projects лише через пакет
+-----------------------------
+
+Illegal imports of protected package civic_budget.projects.domain
+(via civic_budget.projects.* expression):
+
+- civic_budget.results.domain -> civic_budget.projects.domain (l.7)
+
+- civic_budget.voting.domain -> civic_budget.projects.domain (l.9)
+
+
+R2: voting лише через пакет
+---------------------------
+
+Illegal imports of protected package civic_budget.voting.domain
+(via civic_budget.voting.* expression):
+
+- civic_budget.results.domain -> civic_budget.voting.domain (l.8)
+
+

@@ -1,0 +1,10 @@
+# граф залежностей між модулями (grimp, прямі імпорти, до виправлень)
+# коміт: f34264695ee8
+
+web       -> platform
+results   -> voting, projects, cycles, platform
+voting    -> projects, identity, cycles, platform
+projects  -> identity, cycles, platform
+identity  -> -
+cycles    -> platform
+platform  -> -
