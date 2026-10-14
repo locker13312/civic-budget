@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from civic_budget import __version__
-from civic_budget.platform.build import git_sha
+from civic_budget.platform import git_sha
 
 
 class Health(BaseModel):

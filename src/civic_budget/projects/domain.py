@@ -2,9 +2,9 @@ from dataclasses import dataclass, replace
 from datetime import datetime
 from enum import StrEnum
 
-from civic_budget.cycles.domain import Category, Cycle, Phase
-from civic_budget.identity.domain import Role, User
-from civic_budget.platform.errors import DomainError
+from civic_budget.cycles import Category, Cycle, Phase
+from civic_budget.identity import Role, User
+from civic_budget.platform import DomainError
 
 
 class ProjectStatus(StrEnum):

@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import StrEnum
 from itertools import pairwise
 
-from civic_budget.platform.errors import DomainError
+from civic_budget.platform import DomainError
 
 
 class Phase(StrEnum):

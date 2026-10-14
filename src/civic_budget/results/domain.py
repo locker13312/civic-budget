@@ -2,10 +2,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
-from civic_budget.cycles.domain import Cycle, Phase
-from civic_budget.platform.errors import DomainError
-from civic_budget.projects.domain import Project, ProjectStatus
-from civic_budget.voting.domain import Vote, count_votes
+from civic_budget.cycles import Cycle, Phase
+from civic_budget.platform import DomainError
+from civic_budget.projects import Project, ProjectStatus
+from civic_budget.voting import Vote, count_votes
 
 
 class TallyError(DomainError):

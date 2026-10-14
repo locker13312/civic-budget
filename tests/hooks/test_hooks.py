@@ -26,6 +26,7 @@ DIRTY = "import os,sys\nx=1\n"  # не відформатовано і неви�
 CLEAN = "x = 1\n"
 TYPE_ERROR = 'x: int = "один"\n'  # формат і лінтер чисті, mypy ні
 NEW_FILE = "src/civic_budget/platform/sample.py"
+SHORTCUT = 'from civic_budget.projects.domain import Project\n\n__all__ = ["Project"]\n'
 
 
 @dataclass
@@ -143,3 +144,16 @@ def test_pre_push_runs_full_check(repo: Repo, tmp_path: Path) -> None:
     accepted = repo.git("push", "origin", "main")
 
     assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+
+
+@pytest.mark.ac("AC-1.9")
+def test_pre_commit_blocks_import_into_other_module_internals(repo: Repo) -> None:
+    sneaky = "src/civic_budget/voting/shortcut.py"
+    # формат і лінтер чисті, порушено лише R2
+    repo.write(sneaky, SHORTCUT)
+    repo.git("add", sneaky)
+
+    result = repo.commit("reach into projects internals")
+
+    assert result.returncode != 0
+    assert "R2: projects" in result.stdout + result.stderr

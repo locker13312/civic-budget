@@ -3,10 +3,10 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
-from civic_budget.cycles.domain import Cycle, Phase
-from civic_budget.identity.domain import User
-from civic_budget.platform.errors import DomainError
-from civic_budget.projects.domain import Project, ProjectStatus
+from civic_budget.cycles import Cycle, Phase
+from civic_budget.identity import User
+from civic_budget.platform import DomainError
+from civic_budget.projects import Project, ProjectStatus
 
 
 class VoteError(DomainError):
