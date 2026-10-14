@@ -9,8 +9,8 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.143.0",
+    "pydantic>=2.14",
     "pydantic-settings>=2.15.0",
-    "sqlalchemy>=2.1.4",
     "uvicorn>=0.54.0",
 ]
 
@@ -20,6 +20,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "deptry>=0.25.1",
     "httpx2>=2.13.1",
     "import-linter>=2.15",
     "mypy>=2.4.0",
@@ -136,3 +137,11 @@ source_modules = [
     "civic_budget.platform",
 ]
 forbidden_modules = ["fastapi", "starlette"]
+
+# залежності пакетів: див. standards/code-style.md, розділ «Залежності»
+[tool.deptry]
+known_first_party = ["civic_budget"]
+
+[tool.deptry.per_rule_ignores]
+# uvicorn запускається як програма (make run), а не імпортується
+DEP002 = ["uvicorn"]

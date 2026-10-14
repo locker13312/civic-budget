@@ -6,8 +6,8 @@ PY := $(BIN)/python
 TASK ?= 01-foundation
 REPORTS := tasks/$(TASK)/reports
 
-.PHONY: setup fmt fmt-check lint types contracts docs smoke test build check \
-	pre-commit run clean
+.PHONY: setup fmt fmt-check lint types contracts deps docs smoke test build \
+	check pre-commit run clean
 
 setup:
 	uv sync --frozen
@@ -29,6 +29,9 @@ types:
 contracts:
 	$(BIN)/lint-imports
 
+deps:
+	$(BIN)/deptry src
+
 docs:
 	$(PY) scripts/check_docs.py
 
@@ -43,7 +46,7 @@ build:
 
 pre-commit: fmt-check lint contracts smoke
 
-check: fmt-check lint contracts types docs test build
+check: fmt-check lint contracts types deps docs test build
 
 run:
 	GIT_SHA=$$(git rev-parse --short=12 HEAD) $(BIN)/uvicorn --factory civic_budget.web:create_app
