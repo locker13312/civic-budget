@@ -3,7 +3,6 @@
 set -euo pipefail
 
 task="${1:?потрібна назва теки завдання, напр. 01-foundation}"
-modules="${CIVIC_NODE_MODULES:-$PWD/node_modules}"
 out="tasks/$task/reports"
 port="${PORT:-8765}"
 sha=$(git rev-parse --short=12 HEAD)
@@ -40,7 +39,8 @@ header() {
 } | sed -r 's/\x1B\[[0-9;]*m//g' >"$out/hooks.txt"
 
 # 3а. те саме вручну: брудний коміт у свіжому клоні
-demo=$(mktemp -d)
+# клон усередині проєкту, щоб node знайшов node_modules вгору по дереву
+demo=$(mktemp -d "$PWD/.civic-tmp-demo.XXXXXX")
 git clone -q . "$demo/repo"
 {
   header "демо: хук блокує брудний коміт" "scripts/report.sh (розділ 3а)"
@@ -53,7 +53,7 @@ git clone -q . "$demo/repo"
   echo "\$ git add src/platform/dirty.js && git commit -m dirty"
   git add src/platform/dirty.js
   set +e
-  CIVIC_NODE_MODULES="$modules" git -c user.name=demo -c user.email=demo@example.com \
+  git -c user.name=demo -c user.email=demo@example.com \
     commit -m dirty 2>&1
   echo "код виходу: $?"
   set -e

@@ -4,4 +4,4 @@ import { buildApp } from './web/index.js';
 const settings = loadSettings();
 const app = buildApp({ logger: true });
 
-await app.listen({ port: settings.port, host: '0.0.0.0' });
+await app.listen({ port: settings.port, host: settings.host });

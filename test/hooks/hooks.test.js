@@ -1,19 +1,25 @@
 // хуки перевіряються на справжньому git у тимчасовому репозиторії
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, relative } from 'node:path';
+import {
+  appendFileSync,
+  cpSync,
+  mkdtempSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { after, describe, test } from 'node:test';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const SKIP = new Set(['.git', 'node_modules', 'dist', 'coverage']);
+const TMP_PREFIX = '.civic-tmp-';
 
 // не відформатовано (prettier) і без крапок з комою
 const DIRTY = 'const x=1\nexport default x\n';
 const CLEAN = 'const x = 1;\nexport default x;\n';
-// формат і лінтер чисті, tsc ні
 // формат, лінтер і knip чисті, tsc ні; дописується в наявний файл, бо новий
 // невикористаний файл knip у pre-push теж відхилить
 const TYPE_ERROR = "\n/** @type {number} */\nconst answer = 'один';\nvoid answer;\n";
@@ -34,18 +40,21 @@ after(() => {
 });
 
 function sandbox() {
-  const base = mkdtempSync(join(tmpdir(), 'civic-hooks-'));
+  // тимчасовий репозиторій лежить усередині проєкту: node знаходить
+  // node_modules вгору по дереву, посилання не потрібні (на Windows теж)
+  const base = mkdtempSync(join(ROOT, TMP_PREFIX));
   cleanup.push(base);
   const path = join(base, 'repo');
-  cpSync(ROOT, path, {
-    recursive: true,
-    filter: (src) => !SKIP.has(relative(ROOT, src).split('/')[0] ?? ''),
-  });
+  // копіюємо поелементно: cpSync не копіює теку в її ж підтеку
+  for (const name of readdirSync(ROOT)) {
+    if (!SKIP.has(name) && !name.startsWith(TMP_PREFIX)) {
+      cpSync(join(ROOT, name), join(path, name), { recursive: true });
+    }
+  }
 
   /** @type {NodeJS.ProcessEnv} */
   const env = {
     ...process.env,
-    CIVIC_NODE_MODULES: process.env.CIVIC_NODE_MODULES ?? join(ROOT, 'node_modules'),
     CIVIC_NESTED: '1',
     GIT_AUTHOR_NAME: 'test',
     GIT_AUTHOR_EMAIL: 'test@example.com',
@@ -78,7 +87,7 @@ function sandbox() {
   git('init', '-q', '-b', 'main');
   git('config', 'commit.gpgsign', 'false');
   git('add', '-A');
-  const first = git('-c', 'core.hooksPath=/dev/null', 'commit', '-q', '-m', 'init');
+  const first = git('commit', '-q', '--no-verify', '-m', 'init');
   assert.equal(first.code, 0, first.output);
   git('config', 'core.hooksPath', '.githooks');
   return { base, git, write, append, commit };

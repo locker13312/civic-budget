@@ -1,0 +1,5 @@
+# однакові переноси рядків на Linux і Windows: prettier чекає LF,
+# а bash-хуки з CRLF не запускаються
+* text=auto eol=lf
+*.png binary
+*.tgz binary

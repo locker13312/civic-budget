@@ -4,7 +4,7 @@
   "description": "Громадський бюджет міста: подання проєктів, модерація, голосування, підсумки",
   "main": "src/server.js",
   "scripts": {
-    "prepare": "git config core.hooksPath .githooks || true",
+    "prepare": "node scripts/install-hooks.js",
     "start": "node src/server.js",
     "fmt": "prettier --write . && eslint --fix .",
     "fmt-check": "prettier --check .",
@@ -13,7 +13,7 @@
     "docs": "node scripts/check-docs.js",
     "smoke": "node --test --test-reporter=spec \"test/smoke/*.test.js\"",
     "test": "node --test --test-reporter=spec \"test/**/*.test.js\"",
-    "build": "mkdir -p dist && npm pack --pack-destination dist --silent",
+    "build": "node -e \"require('node:fs').mkdirSync('dist',{recursive:true})\" && npm pack --pack-destination dist --silent",
     "boundaries": "depcruise src --config .dependency-cruiser.cjs --output-type err",
     "deps": "knip --no-progress"
   },
