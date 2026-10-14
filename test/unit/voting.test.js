@@ -10,7 +10,7 @@ const VOTER = testUser(7);
 
 /**
  * @param {number} [id]
- * @param {{ status?: import('../../src/projects/domain.js').ProjectStatus, cycleId?: number }} [options]
+ * @param {{ status?: import('../../src/projects/index.js').ProjectStatus, cycleId?: number }} [options]
  * @returns {import('../../src/projects/index.js').Project}
  */
 function project(id = 1, { status = ProjectStatus.APPROVED, cycleId = 1 } = {}) {

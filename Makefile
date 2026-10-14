@@ -4,18 +4,18 @@
 NPM := npm run --silent
 TASK ?= 01-foundation
 
-.PHONY: setup fmt fmt-check lint types docs smoke test build check pre-commit \
-	run clean
+.PHONY: setup fmt fmt-check lint boundaries types docs smoke test build check \
+	pre-commit run clean
 
 setup:
 	npm ci
 
-fmt fmt-check lint types docs smoke test build:
+fmt fmt-check lint boundaries types docs smoke test build:
 	$(NPM) $@
 
-pre-commit: fmt-check lint smoke
+pre-commit: fmt-check lint boundaries smoke
 
-check: fmt-check lint types docs test build
+check: fmt-check lint boundaries types docs test build
 
 run:
 	GIT_SHA=$$(git rev-parse --short=12 HEAD) node src/server.js

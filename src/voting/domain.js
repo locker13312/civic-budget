@@ -1,12 +1,12 @@
-import { Phase, phaseAt } from '../cycles/domain.js';
-import { isVerified } from '../identity/domain.js';
-import { DomainError } from '../platform/errors.js';
-import { ProjectStatus } from '../projects/domain.js';
+import { Phase, phaseAt } from '../cycles/index.js';
+import { isVerified } from '../identity/index.js';
+import { DomainError } from '../platform/index.js';
+import { ProjectStatus } from '../projects/index.js';
 
 /**
- * @typedef {import('../cycles/domain.js').Cycle} Cycle
- * @typedef {import('../identity/domain.js').User} User
- * @typedef {import('../projects/domain.js').Project} Project
+ * @typedef {import('../cycles/index.js').Cycle} Cycle
+ * @typedef {import('../identity/index.js').User} User
+ * @typedef {import('../projects/index.js').Project} Project
  */
 
 export class VoteError extends DomainError {

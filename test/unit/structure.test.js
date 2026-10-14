@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { test } from 'node:test';
 
 const ROOT = new URL('../../', import.meta.url);
@@ -27,4 +28,20 @@ test('[AC-1.6] теки src/* збігаються з модулями spec.md',
 
   assert.ok(inSpec.size > 0, 'у spec.md не знайдено таблицю модулів');
   assert.deepEqual(modulesInCode(), inSpec);
+});
+
+test('[AC-1.9] правила меж покривають кожен модуль spec.md', () => {
+  const require = createRequire(import.meta.url);
+  /** @type {{ forbidden: Array<{ name: string }> }} */
+  const config = require('../../.dependency-cruiser.cjs');
+  const names = config.forbidden.map((rule) => rule.name);
+  const layered = new Set(
+    names
+      .filter((n) => n.startsWith('R1-') && n !== 'R1-no-cycles')
+      .map((n) => n.slice(3)),
+  );
+
+  assert.deepEqual(layered, modulesInSpec(), 'R1: правило для кожного модуля spec');
+  assert.ok(names.includes('R2-index-only'), 'R2: лише через index.js');
+  assert.ok(names.includes('R4-fastify-only-in-web'), 'R4: fastify лише у web');
 });

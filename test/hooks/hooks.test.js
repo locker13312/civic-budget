@@ -16,6 +16,9 @@ const CLEAN = 'const x = 1;\nexport default x;\n';
 // формат і лінтер чисті, tsc ні
 const TYPE_ERROR = "/** @type {number} */\nconst x = 'один';\nexport default x;\n";
 const NEW_FILE = 'src/platform/sample.js';
+// формат і лінтер чисті, порушено лише R2
+const SHORTCUT =
+  "import { submit } from '../projects/domain.js';\n\nexport default submit;\n";
 
 const nested = process.env.CIVIC_NESTED === '1';
 /** @type {string[]} */
@@ -139,5 +142,16 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     const accepted = repo.git('push', 'origin', 'main');
 
     assert.equal(accepted.code, 0, accepted.output);
+  });
+
+  test('[AC-1.9] pre-commit відхиляє імпорт у внутрішній файл іншого модуля', () => {
+    const repo = sandbox();
+    repo.write('src/voting/shortcut.js', SHORTCUT);
+    repo.git('add', 'src/voting/shortcut.js');
+
+    const result = repo.commit('reach into projects internals');
+
+    assert.notEqual(result.code, 0);
+    assert.match(result.output, /R2-index-only/);
   });
 });

@@ -86,6 +86,9 @@ erDiagram
 
 ## Правила меж
 
+R1, R2 і R4 перевіряє `make boundaries` (dependency-cruiser, правила в
+`.dependency-cruiser.cjs`), R3 перевіряють тести і рев'ю.
+
 - R1. Модулі залежать один від одного лише згори вниз за схемою, без циклів.
 - R2. Інший модуль імпортує лише `index.js` модуля
   (`import ... from '../projects/index.js'`), а не його внутрішні файли.

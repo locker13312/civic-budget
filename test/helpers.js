@@ -48,7 +48,7 @@ export function testCycle({
 
 /**
  * @param {number} [id]
- * @param {import('../src/identity/domain.js').Role} [role]
+ * @param {import('../src/identity/index.js').Role} [role]
  * @param {{ verified?: boolean }} [options]
  */
 export function testUser(id = 1, role = Role.RESIDENT, { verified = true } = {}) {

@@ -1,11 +1,11 @@
-import { Phase, limitFor, phaseAt } from '../cycles/domain.js';
-import { Role, isVerified } from '../identity/domain.js';
-import { DomainError } from '../platform/errors.js';
+import { Phase, limitFor, phaseAt } from '../cycles/index.js';
+import { Role, isVerified } from '../identity/index.js';
+import { DomainError } from '../platform/index.js';
 
 /**
- * @typedef {import('../cycles/domain.js').Category} Category
- * @typedef {import('../cycles/domain.js').Cycle} Cycle
- * @typedef {import('../identity/domain.js').User} User
+ * @typedef {import('../cycles/index.js').Category} Category
+ * @typedef {import('../cycles/index.js').Cycle} Cycle
+ * @typedef {import('../identity/index.js').User} User
  */
 
 export const ProjectStatus = Object.freeze({

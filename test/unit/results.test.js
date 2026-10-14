@@ -9,7 +9,7 @@ import { IN_RESULTS, IN_SUBMISSION, IN_VOTING, testCycle } from '../helpers.js';
 /**
  * @param {number} id
  * @param {number} cost
- * @param {{ status?: import('../../src/projects/domain.js').ProjectStatus, minutes?: number }} [options]
+ * @param {{ status?: import('../../src/projects/index.js').ProjectStatus, minutes?: number }} [options]
  * @returns {import('../../src/projects/index.js').Project}
  */
 function project(id, cost, { status = ProjectStatus.APPROVED, minutes = 0 } = {}) {

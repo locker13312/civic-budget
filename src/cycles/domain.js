@@ -1,4 +1,4 @@
-import { DomainError } from '../platform/errors.js';
+import { DomainError } from '../platform/index.js';
 
 export const Phase = Object.freeze({
   PLANNED: 'planned',

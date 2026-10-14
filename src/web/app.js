@@ -1,6 +1,6 @@
 import Fastify from 'fastify';
 
-import { gitSha, version } from '../platform/build.js';
+import { gitSha, version } from '../platform/index.js';
 
 /**
  * Збирає застосунок; listen викликає server.js.

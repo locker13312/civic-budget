@@ -1,12 +1,12 @@
-import { Phase, phaseAt } from '../cycles/domain.js';
-import { DomainError } from '../platform/errors.js';
-import { ProjectStatus } from '../projects/domain.js';
-import { countVotes } from '../voting/domain.js';
+import { Phase, phaseAt } from '../cycles/index.js';
+import { DomainError } from '../platform/index.js';
+import { ProjectStatus } from '../projects/index.js';
+import { countVotes } from '../voting/index.js';
 
 /**
- * @typedef {import('../cycles/domain.js').Cycle} Cycle
- * @typedef {import('../projects/domain.js').Project} Project
- * @typedef {import('../voting/domain.js').Vote} Vote
+ * @typedef {import('../cycles/index.js').Cycle} Cycle
+ * @typedef {import('../projects/index.js').Project} Project
+ * @typedef {import('../voting/index.js').Vote} Vote
  */
 
 export class TallyError extends DomainError {
