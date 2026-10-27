@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# артефакти запуску для tasks/<завдання>/reports: make report TASK=01-foundation
+# артефакти запуску для tasks/<завдання>/reports: npm run report -- 01-foundation
 set -euo pipefail
 
 task="${1:?потрібна назва теки завдання, напр. 01-foundation}"
@@ -17,18 +17,18 @@ header() {
 
 # 1. повний конвеєр
 {
-  header "make check" "make check"
-  make --no-print-directory check 2>&1
+  header "npm run check" "npm run check"
+  npm run --silent check 2>&1
 } | sed -r 's/\x1B\[[0-9;]*m//g' >"$out/check.txt"
 
 # 2. межі модулів і залежності після виправлень аудиту
 {
-  header "make boundaries" "make boundaries"
-  make --no-print-directory boundaries 2>&1
+  header "npm run boundaries" "npm run boundaries"
+  npm run --silent boundaries 2>&1
 } | sed -r 's/\x1B\[[0-9;]*m//g' >"$out/boundaries.txt"
 {
-  header "make deps" "make deps"
-  make --no-print-directory deps 2>&1
+  header "npm run deps" "npm run deps"
+  npm run --silent deps 2>&1
   echo "knip: зауважень немає"
 } | sed -r 's/\x1B\[[0-9;]*m//g' >"$out/deps.txt"
 
@@ -72,7 +72,7 @@ for _ in $(seq 50); do
   sleep 0.1
 done
 {
-  header "запущений застосунок" "make run, потім curl /health і /version"
+  header "запущений застосунок" "npm start, потім curl /health і /version"
   echo "\$ curl -s http://127.0.0.1:$port/health"
   curl -s "http://127.0.0.1:$port/health"
   echo

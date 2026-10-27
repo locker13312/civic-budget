@@ -1,5 +1,5 @@
 // перевіряє документи за стандартами з standards/: spec і spec інкрементів,
-// ADR, DEFENSE і трасування критеріїв прийняття до тестів або make-цілей
+// ADR, DEFENSE і трасування критеріїв прийняття до тестів або npm-скриптів
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -34,7 +34,8 @@ const ADR_NAME = /^\d{4}-[a-z0-9]+(-[a-z0-9]+)*\.md$/;
 const AC_ROW = /^\|\s*(AC-[^|\s]+)\s*\|([^|]*)\|([^|]*)\|\s*$/gm;
 const AC_ID = /^AC-(\d+)\.(\d+)$/;
 const AC_TAG = /\[(AC-\d+\.\d+)\]/g;
-const MAKE_REF = /`make ([\w-]+)`/g;
+// `npm run x` або історичне `make x` (до adr/0006) посилаються на npm-скрипт x
+const MAKE_REF = /`(?:make|npm run) ([\w-]+)`/g;
 
 /**
  * Текст без блоків коду і діаграм: вони не рахуються в обсяг.
@@ -118,23 +119,15 @@ function acTags(testsDir) {
 }
 
 /**
- * @param {string} makefile
+ * @param {string} packageJson
  * @returns {Set<string>}
  */
-function makeTargets(makefile) {
-  if (!existsSync(makefile)) {
+function npmScripts(packageJson) {
+  if (!existsSync(packageJson)) {
     return new Set();
   }
-  const text = readFileSync(makefile, 'utf8');
-  const targets = new Set();
-  for (const match of text.matchAll(/^([\w -]+):/gm)) {
-    for (const name of String(match[1]).split(/\s+/)) {
-      if (name) {
-        targets.add(name);
-      }
-    }
-  }
-  return targets;
+  const pkg = JSON.parse(readFileSync(packageJson, 'utf8'));
+  return new Set(Object.keys(pkg.scripts ?? {}));
 }
 
 /**
@@ -169,14 +162,14 @@ export function checkCriteria(path, text, task, tags, targets) {
     const refs = [...check.matchAll(MAKE_REF)].map((m) => String(m[1]));
     const needsTest = check.includes('тест');
     if (refs.length === 0 && !needsTest) {
-      errors.push(`${where}: у колонці «Перевірка» немає тесту чи make-цілі`);
+      errors.push(`${where}: у колонці «Перевірка» немає тесту чи npm-скрипта`);
     }
     if (needsTest && !tags.has(ac)) {
       errors.push(`${where}: немає тесту з [${ac}] у назві`);
     }
     for (const target of refs) {
       if (!targets.has(target)) {
-        errors.push(`${where}: у Makefile немає цілі \`${target}\``);
+        errors.push(`${where}: у package.json немає скрипта \`${target}\``);
       }
     }
   }
@@ -278,7 +271,7 @@ export function run(root) {
   }
 
   const tags = acTags(join(root, 'test'));
-  const targets = makeTargets(join(root, 'Makefile'));
+  const targets = npmScripts(join(root, 'package.json'));
   const tasks = join(root, 'tasks');
   const taskDirs = existsSync(tasks)
     ? readdirSync(tasks, { withFileTypes: true }).filter((d) => d.isDirectory())

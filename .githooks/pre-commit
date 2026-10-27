@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# перевіряє знімок індексу, тобто рівно те, що піде в коміт (adr/0004)
+# перевіряє знімок індексу, тобто рівно те, що піде в коміт (adr/0006)
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -10,7 +10,7 @@ gitdir=$(git rev-parse --absolute-git-dir)
 dir=$root
 until [ -d "$dir/node_modules" ]; do
   if [ "$(dirname "$dir")" = "$dir" ]; then
-    echo "pre-commit: немає node_modules, запустіть make setup" >&2
+    echo "pre-commit: немає node_modules, запустіть npm ci" >&2
     exit 1
   fi
   dir=$(dirname "$dir")
@@ -20,8 +20,8 @@ snap=$(mktemp -d "$gitdir/civic-snap.XXXXXX")
 trap 'rm -rf "$snap"' EXIT
 git checkout-index --all --prefix="$snap/"
 
-if ! make -C "$snap" --no-print-directory pre-commit; then
+if ! (cd "$snap" && npm run --silent pre-commit); then
   echo >&2
-  echo "pre-commit: коміт відхилено. Виправте (make fmt) і знову git add." >&2
+  echo "pre-commit: коміт відхилено. Виправте (npm run fmt) і знову git add." >&2
   exit 1
 fi

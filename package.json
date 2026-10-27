@@ -15,7 +15,10 @@
     "test": "node --test --test-reporter=spec \"test/**/*.test.js\"",
     "build": "node -e \"require('node:fs').mkdirSync('dist',{recursive:true})\" && npm pack --pack-destination dist --silent",
     "boundaries": "depcruise src --config .dependency-cruiser.cjs --output-type err",
-    "deps": "knip --no-progress"
+    "deps": "knip --no-progress",
+    "check": "npm run fmt-check && npm run lint && npm run boundaries && npm run types && npm run deps && npm run docs && npm run test && npm run build",
+    "pre-commit": "npm run fmt-check && npm run lint && npm run boundaries && npm run smoke",
+    "report": "bash scripts/report.sh"
   },
   "repository": {
     "type": "git",

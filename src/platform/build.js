@@ -20,7 +20,7 @@ let cached;
  * @returns {string}
  */
 export function gitSha() {
-  // у CI і `make run` sha передається через GIT_SHA, локально питаємо git
+  // у CI і в pre-push sha передається через GIT_SHA, локально питаємо git
   cached ??= loadSettings().gitSha?.slice(0, 12) ?? fromGit();
   return cached;
 }

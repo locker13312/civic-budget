@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# повний make check для кожного коміту, що пушиться (adr/0004)
+# повний npm run check для кожного коміту, що пушиться (adr/0006)
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -10,7 +10,7 @@ gitdir=$(git rev-parse --absolute-git-dir)
 dir=$root
 until [ -d "$dir/node_modules" ]; do
   if [ "$(dirname "$dir")" = "$dir" ]; then
-    echo "pre-push: немає node_modules, запустіть make setup" >&2
+    echo "pre-push: немає node_modules, запустіть npm ci" >&2
     exit 1
   fi
   dir=$(dirname "$dir")
@@ -25,8 +25,8 @@ while read -r _local_ref local_sha remote_ref _remote_sha; do
 
   snap=$(mktemp -d "$gitdir/civic-snap.XXXXXX")
   git archive "$local_sha" | tar -x -C "$snap"
-  echo "pre-push: make check для ${local_sha:0:12} -> $remote_ref" >&2
-  if ! GIT_SHA="$local_sha" make -C "$snap" --no-print-directory check; then
+  echo "pre-push: npm run check для ${local_sha:0:12} -> $remote_ref" >&2
+  if ! (cd "$snap" && GIT_SHA="$local_sha" npm run --silent check); then
     failed=1
   fi
   rm -rf "$snap"
@@ -34,6 +34,6 @@ done
 
 if [ "$failed" -ne 0 ]; then
   echo >&2
-  echo "pre-push: push відхилено, make check не проходить." >&2
+  echo "pre-push: push відхилено, npm run check не проходить." >&2
   exit 1
 fi

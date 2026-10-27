@@ -136,7 +136,7 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     assert.match(result.output, /коміт відхилено/);
   });
 
-  test('[AC-1.4] pre-push запускає повний make check', () => {
+  test('[AC-1.4] pre-push запускає повний npm run check', () => {
     const repo = sandbox();
     const remote = join(repo.base, 'remote.git');
     spawnSync('git', ['init', '-q', '--bare', remote]);
