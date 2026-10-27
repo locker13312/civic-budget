@@ -23,6 +23,18 @@ export default [
       'jsdoc/require-property-description': 'off',
       'jsdoc/tag-lines': ['error', 'any', { startLines: 1 }],
       'jsdoc/require-jsdoc': ['error', { publicOnly: true }],
+      // фабрики модулів (create*, build*, seed*) повертають об'єкт, тип якого
+      // tsc виводить сам і експортує як ReturnType; решта функцій документує @returns
+      'jsdoc/require-returns': [
+        'warn',
+        {
+          contexts: [
+            'FunctionDeclaration:not([id.name=/^(create|build|seed)[A-Z]/])',
+            'FunctionExpression',
+            'ArrowFunctionExpression',
+          ],
+        },
+      ],
     },
   },
   {

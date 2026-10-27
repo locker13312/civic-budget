@@ -119,6 +119,9 @@ test('[AC-1.11] results бере з voting лише кількості голо�
     [...sources.matchAll(/import\('\.\.\/voting\/index\.js'\)\.(\w+)/g)].map((m) => m[1]),
   );
 
-  assert.deepEqual(runtime, [], 'results не викликає функцій voting');
-  assert.deepEqual(types, new Set(['VoteCounts']));
+  // з Завдання 2 results отримує кількості через VotingService.countsForCycle,
+  // але як і раніше не бачить окремих записів Vote
+  assert.deepEqual(runtime, [], 'results не імпортує код voting напряму');
+  assert.deepEqual(types, new Set(['VoteCounts', 'VotingService']));
+  assert.doesNotMatch(sources, /import\('\.\.\/voting\/index\.js'\)\.Vote\b/);
 });

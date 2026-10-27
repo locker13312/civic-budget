@@ -20,8 +20,7 @@ const MODERATOR = testUser(90, Role.MODERATOR);
  * @param {Partial<Parameters<typeof submit>[0]>} [overrides]
  */
 function submitted(cycle, overrides = {}) {
-  return submit({
-    projectId: 1,
+  const draft = submit({
     cycle,
     author: testUser(1),
     category: Category.SMALL,
@@ -30,6 +29,7 @@ function submitted(cycle, overrides = {}) {
     now: IN_SUBMISSION,
     ...overrides,
   });
+  return Object.freeze({ id: 1, ...draft });
 }
 
 /**

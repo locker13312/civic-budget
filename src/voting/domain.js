@@ -46,7 +46,7 @@ export function castVote({ voter, project, cycle, voterVotes, now }) {
   }
   const inCycle = voterVotes.filter((v) => v.cycleId === cycle.id);
   if (inCycle.some((v) => v.projectId === project.id)) {
-    throw new VoteError('ви вже голосували за цей проєкт');
+    throw new VoteError('ви вже голосували за цей проєкт', { kind: 'conflict' });
   }
   if (inCycle.length >= cycle.maxVotes) {
     throw new VoteError(`вичерпано ліміт: ${cycle.maxVotes} голосів на раунд`);
