@@ -12,6 +12,23 @@ export class TallyError extends DomainError {
   code = 'tally_rejected';
 }
 
+export class ProgressError extends DomainError {
+  code = 'progress_rejected';
+}
+
+/**
+ * @typedef {Readonly<{
+ *   id: number,
+ *   projectId: number,
+ *   spent: number,
+ *   note: string,
+ *   reportedAt: Date,
+ * }>} ProgressReport
+ * spent у копійках.
+ */
+
+/** @typedef {Readonly<Omit<ProgressReport, 'id'>>} ProgressDraft звіт до збереження */
+
 /**
  * @typedef {Readonly<{
  *   projectId: number,
@@ -79,4 +96,38 @@ export function tally(cycle, projects, counts, now) {
     });
   }
   return outcomes;
+}
+
+/**
+ * Сценарій 5: звіт про реалізацію переможця; витрати не перевищують вартість.
+ *
+ * @param {{
+ *   outcome: Outcome | null,
+ *   project: Project,
+ *   reports: ReadonlyArray<ProgressReport>,
+ *   spent: number,
+ *   note: string,
+ *   now: Date,
+ * }} input
+ * @returns {ProgressDraft}
+ */
+export function reportProgress({ outcome, project, reports, spent, note, now }) {
+  if (!outcome?.funded) {
+    throw new ProgressError('звіт можливий лише для проєкту-переможця');
+  }
+  if (!Number.isSafeInteger(spent) || spent <= 0) {
+    throw new ProgressError('сума витрат має бути цілим додатним числом копійок');
+  }
+  const spentBefore = reports.reduce((sum, report) => sum + report.spent, 0);
+  if (spentBefore + spent > project.cost) {
+    throw new ProgressError(
+      `витрати ${spentBefore + spent} коп. перевищують вартість проєкту ${project.cost} коп.`,
+    );
+  }
+  return Object.freeze({
+    projectId: project.id,
+    spent,
+    note: note.trim(),
+    reportedAt: now,
+  });
 }

@@ -19,9 +19,29 @@
 Потрібні Node.js 22+ і `git`. CI перевіряє проєкт на Linux і Windows.
 
 ```bash
-npm ci          # залежності + git-хуки
-npm run check   # усі перевірки: формат, лінтер, межі, типи, залежності, документи, тести, збірка
-npm start       # http://127.0.0.1:3000/health і /version
+npm ci                 # залежності + git-хуки
+npm run start:static   # прототип: API на статичних даних, БД не потрібна
+npm run db:up          # PostgreSQL 16 у Docker на 127.0.0.1:55432
+npm run db:seed        # схема і статичні дані в PostgreSQL
+npm start              # API на PostgreSQL: http://127.0.0.1:3000/cycles
+npm run check          # усі перевірки: формат, лінтер, межі, типи, залежності, документи, тести, збірка
+```
+
+Без запущеного PostgreSQL тести БД локально пропускаються, у CI вони
+обов'язкові. Інша адреса БД задається в `.env` (не комітиться):
+`CIVIC_DATABASE_URL=postgres://civic:civic@127.0.0.1:55432/civic_budget`,
+для тестів `CIVIC_TEST_DATABASE_URL=…/postgres`.
+
+### API
+
+Користувача передає заголовок `X-User-Id` (у статичних даних: 1 адмін, 2
+модератор, 3–7 і 9 мешканці, 8 неверифікований). Повний список маршрутів і
+помилок: [spec Завдання 2](tasks/02-prototype-db/spec.md).
+
+```bash
+curl http://127.0.0.1:3000/cycles/3/projects
+curl -X POST -H 'x-user-id: 9' http://127.0.0.1:3000/projects/5/votes
+curl -X POST -H 'x-user-id: 1' http://127.0.0.1:3000/cycles/4/tally
 ```
 
 На Windows: встановіть [Node.js LTS](https://nodejs.org) і [Git for
@@ -36,6 +56,7 @@ Windows](https://git-scm.com/download/win); команди запускайте 
 | [spec.md](spec.md) | специфікація системи: модулі, дані (ER), сценарії, правила меж |
 | [standards/](standards/) | власні стандарти: формат spec, ADR, DoD, перелік перевірок, стиль коду |
 | [adr/](adr/) | архітектурні рішення (MADR) |
+| `migrations/` | схема PostgreSQL, файли `NNNN_*.sql` по черзі |
 | `src/` | код; тека на кожен модуль зі spec.md, публічний API модуля це його `index.js` |
 | `test/` | тести; `smoke/` для pre-commit, `hooks/` перевіряє самі git-хуки |
 | `.githooks/` | pre-commit і pre-push |
@@ -47,3 +68,4 @@ Windows](https://git-scm.com/download/win); команди запускайте 
 | Завдання | DEFENSE |
 |---|---|
 | 1. Фундамент | [tasks/01-foundation/DEFENSE.md](tasks/01-foundation/DEFENSE.md) |
+| 2. Прототип → БД | DEFENSE у Classroom; аудит: [tasks/02-prototype-db/audit.md](tasks/02-prototype-db/audit.md) |

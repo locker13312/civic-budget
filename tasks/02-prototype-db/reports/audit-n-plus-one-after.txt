@@ -1,0 +1,7 @@
+# probe n-plus-one, після виправлення (п. 1 аудиту)
+# коміт: виправлення поверх f3d19ca316f9, дата: 2026-10-27 13:59 UTC
+# відтворити: node tasks/02-prototype-db/reports/probes/n-plus-one.js
+
+GET /cycles/3/projects, 7 заявок: 5 запитів
+GET /cycles/4/results, 4 підсумки: 4 запитів
+GET /cycles/3/projects, 17 заявок: 5 запитів

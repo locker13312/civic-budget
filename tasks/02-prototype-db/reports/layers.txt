@@ -1,0 +1,8 @@
+# межі шарів (R1–R5)
+# коміт: d405e62fa3a4, дата: 2026-10-27 14:08 UTC
+# відтворити: npm run boundaries && npm run lint
+
+
+✔ no dependency violations found (59 modules, 108 dependencies cruised)
+
+eslint: порушень немає

@@ -1,0 +1,5 @@
+# probe locked-table, після виправлення (п. 2 аудиту)
+# дата: 2026-10-27 14:00 UTC
+# відтворити: node tasks/02-prototype-db/reports/probes/locked-table.js
+
+таблиця projects заблокована: статус 503 {"error":"source_unavailable","message":"база даних тимчасово недоступна, повтор через 2080 мс

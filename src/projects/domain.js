@@ -41,6 +41,8 @@ export class ReviewError extends DomainError {
  * }>} Project
  */
 
+/** @typedef {Readonly<Omit<Project, 'id'>>} ProjectDraft заявка до збереження */
+
 /**
  * @typedef {Readonly<{
  *   projectId: number,
@@ -52,10 +54,9 @@ export class ReviewError extends DomainError {
  */
 
 /**
- * Сценарій 1: подання заявки.
+ * Сценарій 1: подання заявки. id призначає сховище.
  *
  * @param {{
- *   projectId: number,
  *   cycle: Cycle,
  *   author: User,
  *   category: Category,
@@ -63,9 +64,9 @@ export class ReviewError extends DomainError {
  *   cost: number,
  *   now: Date,
  * }} input
- * @returns {Project}
+ * @returns {ProjectDraft}
  */
-export function submit({ projectId, cycle, author, category, title, cost, now }) {
+export function submit({ cycle, author, category, title, cost, now }) {
   if (!isVerified(author)) {
     throw new SubmissionError('автор не верифікований');
   }
@@ -83,7 +84,6 @@ export function submit({ projectId, cycle, author, category, title, cost, now })
     );
   }
   return Object.freeze({
-    id: projectId,
     cycleId: cycle.id,
     authorId: author.id,
     category,
@@ -109,7 +109,7 @@ export function submit({ projectId, cycle, author, category, title, cost, now })
  */
 export function review(project, { cycle, moderator, decision, reason, now }) {
   if (moderator.role !== Role.MODERATOR) {
-    throw new ReviewError('рішення ухвалює лише модератор');
+    throw new ReviewError('рішення ухвалює лише модератор', { kind: 'forbidden' });
   }
   if (project.cycleId !== cycle.id) {
     throw new ReviewError('проєкт з іншого раунду');
@@ -119,7 +119,9 @@ export function review(project, { cycle, moderator, decision, reason, now }) {
     throw new ReviewError('модерація можлива лише до початку голосування');
   }
   if (project.status !== ProjectStatus.SUBMITTED) {
-    throw new ReviewError(`проєкт уже має статус ${project.status}`);
+    throw new ReviewError(`проєкт уже має статус ${project.status}`, {
+      kind: 'conflict',
+    });
   }
   if (decision === Decision.REJECT && !reason.trim()) {
     throw new ReviewError('для відхилення потрібна причина');

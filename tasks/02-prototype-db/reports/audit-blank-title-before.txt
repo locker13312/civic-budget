@@ -1,0 +1,6 @@
+# probe blank-title, до виправлень
+# коміт: be2d238a9a77, дата: 2026-10-27 13:57 UTC
+# відтворити: git checkout be2d238a9a77 && node tasks/02-prototype-db/reports/probes/blank-title.js
+
+статичні дані: 201  title=""
+PostgreSQL: 500 internal title=undefined

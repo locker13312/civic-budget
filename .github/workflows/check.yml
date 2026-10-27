@@ -17,6 +17,22 @@ jobs:
     defaults:
       run:
         shell: bash
+    # сервіс-контейнери є лише на Linux; порожній image вимикає сервіс на Windows
+    services:
+      postgres:
+        image: ${{ matrix.os == 'ubuntu-latest' && 'postgres:16' || '' }}
+        env:
+          POSTGRES_USER: civic
+          POSTGRES_PASSWORD: civic
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U civic" --health-interval 2s --health-timeout 2s
+          --health-retries 15
+    env:
+      CIVIC_TEST_DATABASE_URL: postgres://civic:civic@127.0.0.1:55432/postgres
+      # на Linux тести БД обов'язкові: недоступна БД — помилка, а не пропуск
+      CIVIC_REQUIRE_DB: ${{ matrix.os == 'ubuntu-latest' && '1' || '0' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

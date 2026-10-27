@@ -1,4 +1,11 @@
 // підрахунок голосів, переможці, хід реалізації
-export { TallyError, tally } from './domain.js';
+export { ProgressError, TallyError, reportProgress, tally } from './domain.js';
+export { createMemoryResultsRepository } from './repository.memory.js';
+export { createPgResultsRepository } from './repository.pg.js';
+export { createResultsService } from './service.js';
 
 /** @typedef {import('./domain.js').Outcome} Outcome */
+/** @typedef {import('./domain.js').ProgressReport} ProgressReport */
+/** @typedef {import('./domain.js').ProgressDraft} ProgressDraft */
+/** @typedef {import('./service.js').ResultsService} ResultsService */
+/** @typedef {import('./service.js').ResultsRepository} ResultsRepository */

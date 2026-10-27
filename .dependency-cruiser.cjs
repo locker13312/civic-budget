@@ -35,6 +35,24 @@ module.exports = {
       to: { path: '^src/[^/]+/', pathNot: ['^src/$1/', '^src/[^/]+/index\\.js$'] },
     },
     {
+      name: 'R5-driver-only-in-platform-db',
+      comment: 'R5: драйвер postgres підключає лише src/platform/db',
+      severity: 'error',
+      from: { path: '^src/', pathNot: '^src/platform/db/' },
+      to: { path: '^node_modules/postgres/' },
+    },
+    {
+      name: 'R5-db-only-in-composition-root',
+      comment:
+        "R5: src/platform/db бачать лише точка збирання і сервер; репозиторії отримують Db ін'єкцією",
+      severity: 'error',
+      from: {
+        path: '^src/',
+        pathNot: ['^src/(container|server)\\.js$', '^src/platform/db/'],
+      },
+      to: { path: '^src/platform/db/' },
+    },
+    {
       name: 'R4-fastify-only-in-web',
       comment: 'R4: fastify використовує лише web',
       severity: 'error',
