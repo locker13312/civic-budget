@@ -143,8 +143,14 @@ export function defineScenarioSuite(storage, makeApp) {
         body: { ...body, title: '   ' },
       });
 
+      const padded = await call(app, 'POST', '/cycles', {
+        user: data.users.admin,
+        body: { ...body, title: '  ГБ-2029  ' },
+      });
+
       assert.equal(created.status, 201);
       assert.equal(created.body.phase, 'planned');
+      assert.equal(padded.body.title, 'ГБ-2029');
       assertError(forbidden, 403, 'forbidden');
       assertError(anonymous, 401, 'unauthenticated');
       assertError(overlapping, 422, 'invalid_cycle');
@@ -170,6 +176,13 @@ export function defineScenarioSuite(storage, makeApp) {
         fullName: 'Наталія Савченко',
       });
       assert.equal(mine.votes, 0);
+
+      const large = await call(app, 'POST', `/cycles/${cycleId}/projects`, {
+        user: data.users.natalia,
+        body: { category: 'large', title: 'Сквер', cost: 100_000_000 },
+      });
+      assert.equal(large.status, 201);
+      assert.equal(large.body.category, 'large');
     });
 
     it('подання відхиляється поза фазою, понад ліміт, без верифікації і не мешканцем', async () => {

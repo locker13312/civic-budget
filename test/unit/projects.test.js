@@ -66,6 +66,12 @@ describe('[AC-1.7] подання заявки', () => {
     });
   }
 
+  test('відхиляє порожню назву', () => {
+    assert.throws(() => submitted(testCycle(), { title: '   ' }), {
+      code: 'submission_rejected',
+    });
+  });
+
   test('відхиляє неверифікованого автора', () => {
     assert.throws(
       () =>

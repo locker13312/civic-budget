@@ -3,7 +3,7 @@
   "testRunner": "tap",
   "tap": {
     "testFiles": [
-      "test/unit/{cycles,projects,voting,results}*.test.js",
+      "test/unit/{boundaries,cycles,identity,projects,voting,results}*.test.js",
       "test/api/memory.test.js"
     ],
     "nodeArgs": ["--test-reporter=tap"]
