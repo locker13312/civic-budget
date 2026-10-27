@@ -39,7 +39,8 @@
     "src"
   ],
   "dependencies": {
-    "fastify": "^5.12.7"
+    "fastify": "^5.12.7",
+    "pino": "^10.4.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
