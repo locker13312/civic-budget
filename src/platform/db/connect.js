@@ -54,6 +54,10 @@ export async function connectDb({ url, logger, max = 10, connectTimeout = 5 }) {
     types: { int8 },
     transform: { undefined: null },
     debug: (_connection, query) => {
+      // postgres.js сам читає типи з pg_catalog на новому з'єднанні: це не наш запит
+      if (query.includes('pg_catalog.pg_type')) {
+        return;
+      }
       countQuery();
       logger.debug({ sql: query.replace(/\s+/g, ' ').trim().slice(0, 200) }, 'sql');
     },

@@ -68,12 +68,16 @@ export function createResultsService({
     async results(cycleId) {
       await cyclesService.get(cycleId);
       const outcomes = await resultsRepository.byCycle(cycleId);
-      return Promise.all(
-        outcomes.map(async (outcome) => {
-          const project = await projectsService.get(outcome.projectId);
-          return { ...outcome, title: project.title, category: project.category };
-        }),
-      );
+      // проєкти всіх підсумків одним запитом (аудит, п. 1)
+      const projects = await projectsService.getMany(outcomes.map((o) => o.projectId));
+      return outcomes.map((outcome) => {
+        const project = projects.get(outcome.projectId);
+        return {
+          ...outcome,
+          title: project?.title ?? '',
+          category: project?.category ?? '',
+        };
+      });
     },
 
     /**

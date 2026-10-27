@@ -7,6 +7,7 @@ import { Role } from './domain.js';
  * @typedef {{
  *   insert(user: NewUser): Promise<User>,
  *   findById(id: number): Promise<User | null>,
+ *   findByIds(ids: ReadonlyArray<number>): Promise<User[]>,
  * }} IdentityRepository
  */
 
@@ -21,6 +22,17 @@ export function createIdentityService({ identityRepository }) {
      */
     async findById(id) {
       return identityRepository.findById(id);
+    },
+
+    /**
+     * Користувачі одним запитом (для списків, без N+1).
+     *
+     * @param {ReadonlyArray<number>} ids
+     * @returns {Promise<Map<number, User>>}
+     */
+    async findByIds(ids) {
+      const users = await identityRepository.findByIds([...new Set(ids)]);
+      return new Map(users.map((user) => [user.id, user]));
     },
 
     /**

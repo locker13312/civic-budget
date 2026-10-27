@@ -234,6 +234,53 @@ describe('PostgreSQL: транзакції, збої, логи', { skip }, () =>
     assert.ok(mine.slice(auth).every((l) => l.userId === user.id));
   });
 
+  test('[AC-2.10] списки коштують сталу кількість запитів: 7 і 17 елементів', async () => {
+    const { logger, lines } = captureLogs();
+    const env = /** @type {NonNullable<Awaited<ReturnType<typeof pgApp>>>} */ (
+      await pgApp({ logger })
+    );
+    cleanup.push(env.close);
+    const { cycles, users } = env.data;
+    const admin = { user: users.admin };
+    /** @param {string} url */
+    const queries = async (url) => {
+      lines.length = 0;
+      await call(env.app, 'GET', url);
+      const done = lines.find((l) => l.msg === 'запит виконано');
+      return /** @type {number} */ (done?.queries);
+    };
+    /** @param {number} cycleId */
+    const addProjects = async (cycleId) => {
+      const authors = [users.iryna, users.petro, users.oksana, users.taras, users.maria];
+      for (let i = 0; i < 10; i += 1) {
+        await env.db.sql`
+          insert into projects (cycle_id, author_id, category, title, cost, status, submitted_at)
+          values (${cycleId}, ${authors[i % 5]?.id ?? 0}, 'small', ${`додаткова ${i}`}, 100,
+                  'approved', now() - interval '100 days')
+        `;
+      }
+    };
+    const projectsUrl = `/cycles/${cycles.voting.id}/projects`;
+    const resultsUrl = `/cycles/${cycles.finished.id}/results`;
+    await call(env.app, 'POST', `/cycles/${cycles.finished.id}/tally`, admin);
+    await queries(projectsUrl); // прогрів пулу
+
+    const small = {
+      projects: await queries(projectsUrl),
+      results: await queries(resultsUrl),
+    };
+    await addProjects(cycles.voting.id);
+    await addProjects(cycles.finished.id);
+    await call(env.app, 'POST', `/cycles/${cycles.finished.id}/tally`, admin);
+    const large = {
+      projects: await queries(projectsUrl),
+      results: await queries(resultsUrl),
+    };
+
+    assert.ok(small.projects > 0 && small.results > 0, 'кількість запитів є в лозі');
+    assert.deepEqual(large, small);
+  });
+
   test('[AC-2.9] кожен прогін має окрему базу, локальний PostgreSQL не на 5432–5434', async () => {
     const first =
       /** @type {NonNullable<Awaited<ReturnType<typeof createTestDatabase>>>} */ (

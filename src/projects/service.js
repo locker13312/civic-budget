@@ -12,6 +12,7 @@ import { review, submit } from './domain.js';
  * @typedef {{
  *   insertSubmission(draft: ProjectDraft, idempotency: Idempotency): Promise<{ project: Project, replayed: boolean }>,
  *   findById(id: number): Promise<Project | null>,
+ *   findByIds(ids: ReadonlyArray<number>): Promise<Project[]>,
  *   listByCycle(cycleId: number): Promise<Project[]>,
  *   reviewOf(projectId: number): Promise<Review | null>,
  *   saveReview(project: Project, review: Review): Promise<void>,
@@ -49,6 +50,17 @@ export function createProjectsService({
     },
 
     /**
+     * Заявки одним запитом (для списків, без N+1).
+     *
+     * @param {ReadonlyArray<number>} ids
+     * @returns {Promise<Map<number, Project>>}
+     */
+    async getMany(ids) {
+      const projects = await projectsRepository.findByIds([...new Set(ids)]);
+      return new Map(projects.map((project) => [project.id, project]));
+    },
+
+    /**
      * Заявка разом з рішенням модератора.
      *
      * @param {number} id
@@ -78,15 +90,15 @@ export function createProjectsService({
     async listByCycle(cycleId) {
       await cyclesService.get(cycleId);
       const projects = await projectsRepository.listByCycle(cycleId);
-      return Promise.all(
-        projects.map(async (project) => {
-          const author = await identityService.findById(project.authorId);
-          return {
-            ...project,
-            author: { id: project.authorId, fullName: author?.fullName ?? '' },
-          };
-        }),
-      );
+      // автори всіх заявок одним запитом, а не по одному на заявку (аудит, п. 1)
+      const authors = await identityService.findByIds(projects.map((p) => p.authorId));
+      return projects.map((project) => ({
+        ...project,
+        author: {
+          id: project.authorId,
+          fullName: authors.get(project.authorId)?.fullName ?? '',
+        },
+      }));
     },
 
     /**

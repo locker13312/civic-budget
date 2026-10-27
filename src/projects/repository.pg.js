@@ -82,6 +82,15 @@ export function createPgProjectsRepository({ db }) {
       return row ? toProject(row) : null;
     },
 
+    async findByIds(ids) {
+      if (ids.length === 0) {
+        return [];
+      }
+      const rows =
+        await sql`select ${columns} from projects where id = any(${ids}::int[])`;
+      return rows.map(toProject);
+    },
+
     async listByCycle(cycleId) {
       const rows = await sql`
         select ${columns} from projects where cycle_id = ${cycleId} order by id

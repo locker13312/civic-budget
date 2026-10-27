@@ -34,5 +34,14 @@ export function createPgIdentityRepository({ db }) {
       `;
       return row ? toUser(row) : null;
     },
+    async findByIds(ids) {
+      if (ids.length === 0) {
+        return [];
+      }
+      const rows = await sql`
+        select id, full_name, role, verified_at from users where id = any(${ids}::int[])
+      `;
+      return rows.map(toUser);
+    },
   };
 }

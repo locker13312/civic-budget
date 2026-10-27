@@ -44,6 +44,9 @@ export function createMemoryProjectsRepository() {
     async findById(id) {
       return projects.get(id) ?? null;
     },
+    async findByIds(ids) {
+      return ids.flatMap((id) => projects.get(id) ?? []);
+    },
     async listByCycle(cycleId) {
       return [...projects.values()].filter((p) => p.cycleId === cycleId);
     },

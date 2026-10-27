@@ -25,5 +25,8 @@ export function createMemoryIdentityRepository() {
     async findById(id) {
       return users.get(id) ?? null;
     },
+    async findByIds(ids) {
+      return ids.flatMap((id) => users.get(id) ?? []);
+    },
   };
 }

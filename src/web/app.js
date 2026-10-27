@@ -1,5 +1,6 @@
 import Fastify, { LogController } from 'fastify';
 
+import { currentContext } from '../platform/index.js';
 import { registerRequestContext, requestId } from './context.js';
 import { registerErrorHandling } from './errors.js';
 import { cyclesRoutes } from './routes/cycles.js';
@@ -45,6 +46,8 @@ export function buildApp(services) {
         url: request.url,
         statusCode: reply.statusCode,
         ms: Math.round(reply.elapsedTime),
+        // скільки запитів до БД коштував запит: N+1 видно в лозі (аудит, п. 1)
+        queries: currentContext()?.queries ?? 0,
       },
       'запит виконано',
     );
