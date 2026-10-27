@@ -44,8 +44,31 @@ jobs:
       - name: check
         run: npm run --silent check 2>&1 | tee check.log
         shell: bash -o pipefail {0}
+      # пороги покриття (AC-3.1, AC-3.2); лише на Linux, де тести БД не пропускаються
+      - name: coverage
+        if: matrix.os == 'ubuntu-latest'
+        run: npm run --silent coverage:unit && npm run --silent coverage
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: check-report-${{ matrix.os }}
           path: check.log
+
+  # мутаційне тестування домену й сервісів; падає нижче 70% (AC-3.5)
+  mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: setup
+        run: npm ci
+      - name: mutation
+        run: npm run mutation
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mutation-report
+          path: reports/mutation/

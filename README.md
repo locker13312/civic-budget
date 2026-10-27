@@ -49,6 +49,11 @@ Windows](https://git-scm.com/download/win); команди запускайте 
 Переноси рядків задає `.gitattributes`, тож налаштовувати `core.autocrlf`
 не треба.
 
+Тести за рівнями: `npm run test:unit`, `npm run test:integration` (потрібен
+PostgreSQL, `npm run db:up`), `npm run test:e2e`. Покриття з порогами:
+`npm run coverage`. Мутаційне тестування (Stryker, ~4 хв): `npm run mutation`,
+HTML-звіт у `reports/mutation/index.html`.
+
 ## Де що лежить
 
 | Шлях | Що там |
@@ -58,7 +63,7 @@ Windows](https://git-scm.com/download/win); команди запускайте 
 | [adr/](adr/) | архітектурні рішення (MADR) |
 | `migrations/` | схема PostgreSQL, файли `NNNN_*.sql` по черзі |
 | `src/` | код; тека на кожен модуль зі spec.md, публічний API модуля це його `index.js` |
-| `test/` | тести; `smoke/` для pre-commit, `hooks/` перевіряє самі git-хуки |
+| `test/` | тести за рівнями: `unit/`, інтеграційні `api/`, `db/`, `hooks/`, `smoke/`, наскрізні `e2e/` |
 | `.githooks/` | pre-commit і pre-push |
 | `tasks/NN-*/` | здачі: spec інкременту, аудит, звіти запуску, DEFENSE |
 | [ai/](ai/) | слід роботи з AI: промпти і рішення |
@@ -69,3 +74,4 @@ Windows](https://git-scm.com/download/win); команди запускайте 
 |---|---|
 | 1. Фундамент | [tasks/01-foundation/DEFENSE.md](tasks/01-foundation/DEFENSE.md) |
 | 2. Прототип → БД | DEFENSE у Classroom; аудит: [tasks/02-prototype-db/audit.md](tasks/02-prototype-db/audit.md) |
+| 3. Тестування | DEFENSE у Classroom; аудит: [tasks/03-testing/audit.md](tasks/03-testing/audit.md), невбиті мутанти: [mutation-survivors.md](tasks/03-testing/reports/mutation-survivors.md) |

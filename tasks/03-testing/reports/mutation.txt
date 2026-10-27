@@ -1,0 +1,29 @@
+# мутаційне тестування (поріг 70%)
+# коміт: cb28c5652e56, дата: 2026-10-27 15:27 UTC
+# відтворити: npm run mutation
+
+             | % Mutation score |          |           |            |          |          |
+File         |  total | covered | # killed | # timeout | # survived | # no cov | # errors |
+-------------|--------|---------|----------|-----------|------------|----------|----------|
+All files    |  92.02 |   92.22 |      415 |         0 |         35 |        1 |        0 |
+ cycles      |  91.20 |   91.20 |      114 |         0 |         11 |        0 |        0 |
+  domain.js  |  90.74 |   90.74 |       98 |         0 |         10 |        0 |        0 |
+  service.js |  94.12 |   94.12 |       16 |         0 |          1 |        0 |        0 |
+ identity    |  93.55 |   93.55 |       29 |         0 |          2 |        0 |        0 |
+  domain.js  | 100.00 |  100.00 |       10 |         0 |          0 |        0 |        0 |
+  service.js |  90.48 |   90.48 |       19 |         0 |          2 |        0 |        0 |
+ projects    |  90.91 |   91.67 |      110 |         0 |         10 |        1 |        0 |
+  domain.js  |  95.35 |   95.35 |       82 |         0 |          4 |        0 |        0 |
+  service.js |  80.00 |   82.35 |       28 |         0 |          6 |        1 |        0 |
+ results     |  91.59 |   91.59 |       98 |         0 |          9 |        0 |        0 |
+  domain.js  |  96.20 |   96.20 |       76 |         0 |          3 |        0 |        0 |
+  service.js |  78.57 |   78.57 |       22 |         0 |          6 |        0 |        0 |
+ voting      |  95.52 |   95.52 |       64 |         0 |          3 |        0 |        0 |
+  domain.js  |  98.08 |   98.08 |       51 |         0 |          1 |        0 |        0 |
+  service.js |  86.67 |   86.67 |       13 |         0 |          2 |        0 |        0 |
+-------------|--------|---------|----------|-----------|------------|----------|----------|
+17:30:35 (1151) INFO MutationTestReportHelper Final mutation score of 92.02 is greater than or equal to break threshold 70
+17:30:35 (1151) INFO JsonReporter Your report can be found at: file:///home/claude/civic-budget/reports/mutation/mutation.json
+17:30:35 (1151) INFO HtmlReporter Your report can be found at: file:///home/claude/civic-budget/reports/mutation/index.html
+17:30:35 (1151) INFO MutationTestExecutor Done in 3 minutes and 26 seconds.
+mutation score 92.02%, невбитих 36, без класу 0; таблиця: /home/claude/civic-budget/tasks/03-testing/reports/mutation-survivors.md

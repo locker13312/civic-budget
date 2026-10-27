@@ -24,7 +24,13 @@
     "db:down": "docker compose down",
     "db:migrate": "node scripts/db.js migrate",
     "db:seed": "node scripts/db.js seed",
-    "db:reset": "node scripts/db.js reset"
+    "db:reset": "node scripts/db.js reset",
+    "test:unit": "node --test --test-reporter=spec \"test/unit/*.test.js\"",
+    "test:integration": "node --test --test-reporter=spec \"test/smoke/*.test.js\" \"test/api/*.test.js\" \"test/db/*.test.js\" \"test/hooks/*.test.js\"",
+    "test:e2e": "node --test --test-reporter=spec \"test/e2e/*.test.js\"",
+    "coverage": "node --test --test-reporter=spec --experimental-test-coverage --test-coverage-include=\"src/**\" --test-coverage-branches=80 \"test/**/*.test.js\"",
+    "coverage:unit": "node --test --test-reporter=spec --experimental-test-coverage --test-coverage-include=\"src/results/domain.js\" --test-coverage-include=\"src/results/service.js\" --test-coverage-include=\"src/results/repository.memory.js\" --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 \"test/unit/*.test.js\"",
+    "mutation": "stryker run && node scripts/mutation-report.js"
   },
   "repository": {
     "type": "git",
@@ -52,6 +58,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/tap-runner": "^10.1.1",
     "@types/node": "^22.20.5",
     "dependency-cruiser": "^18.6.0",
     "eslint": "^10.12.0",

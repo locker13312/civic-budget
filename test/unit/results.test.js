@@ -4,7 +4,12 @@ import { describe, test } from 'node:test';
 
 import { Category } from '../../src/cycles/index.js';
 import { ProjectStatus } from '../../src/projects/index.js';
-import { TallyError, tally } from '../../src/results/index.js';
+import {
+  ProgressError,
+  TallyError,
+  reportProgress,
+  tally,
+} from '../../src/results/index.js';
 import { IN_RESULTS, IN_SUBMISSION, IN_VOTING, testCycle } from '../helpers.js';
 
 /**
@@ -124,4 +129,56 @@ test('[AC-1.11] results бере з voting лише кількості голо�
   assert.deepEqual(runtime, [], 'results не імпортує код voting напряму');
   assert.deepEqual(types, new Set(['VoteCounts', 'VotingService']));
   assert.doesNotMatch(sources, /import\('\.\.\/voting\/index\.js'\)\.Vote\b/);
+});
+
+describe('[AC-3.1] звіт про реалізацію (reportProgress)', () => {
+  const stop = project(1, 400_000);
+  /**
+   * @param {boolean} funded
+   * @returns {import('../../src/results/index.js').Outcome}
+   */
+  const outcome = (funded) =>
+    Object.freeze({ projectId: 1, votes: 5, rank: 1, funded, decidedAt: IN_RESULTS });
+  /**
+   * @param {Partial<Parameters<typeof reportProgress>[0]>} overrides
+   * @returns {import('../../src/results/index.js').ProgressDraft}
+   */
+  const report = (overrides = {}) =>
+    reportProgress({
+      outcome: outcome(true),
+      project: stop,
+      reports: [],
+      spent: 100_000,
+      note: '  закуплено  ',
+      now: IN_RESULTS,
+      ...overrides,
+    });
+
+  test('звіт переможця з обрізаною нотаткою', () => {
+    assert.deepEqual(report(), {
+      projectId: 1,
+      spent: 100_000,
+      note: 'закуплено',
+      reportedAt: IN_RESULTS,
+    });
+  });
+
+  test('без підсумку або для непрофінансованого проєкту — відмова', () => {
+    assert.throws(() => report({ outcome: null }), ProgressError);
+    assert.throws(() => report({ outcome: outcome(false) }), ProgressError);
+  });
+
+  test('сума має бути цілим додатним числом копійок', () => {
+    for (const spent of [0, -5, 1.5]) {
+      assert.throws(() => report({ spent }), ProgressError);
+    }
+  });
+
+  test('сума звітів не перевищує вартість проєкту', () => {
+    const before = [
+      { id: 1, projectId: 1, spent: 350_000, note: '', reportedAt: IN_RESULTS },
+    ];
+
+    assert.throws(() => report({ reports: before, spent: 50_001 }), ProgressError);
+  });
 });

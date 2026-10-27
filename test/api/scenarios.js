@@ -5,6 +5,7 @@ import { after, before, beforeEach, describe, test } from 'node:test';
 
 /**
  * @typedef {import('../../src/seed.js').StaticData} StaticData
+ * @typedef {ReturnType<typeof JSON.parse>} Json тіло відповіді, як його повертає JSON.parse
  * @typedef {{ app: import('fastify').FastifyInstance, data: StaticData, close(): Promise<void> }} TestApp
  * @typedef {{ user?: { id: number }, body?: unknown, headers?: Record<string, string> }} CallOptions
  */
@@ -27,6 +28,21 @@ export async function call(app, method, url, { user, body, headers = {} } = {}) 
     body: response.json(),
     headers: response.headers,
   };
+}
+
+/**
+ * Помилка API перевіряється за статусом і кодом `error` зі spec (AC-3.9):
+ * код — частина контракту, статус його не замінює.
+ *
+ * @param {{ status: number, body: Json }} response
+ * @param {number} status
+ * @param {string} code
+ */
+export function assertError(response, status, code) {
+  assert.deepEqual(
+    { status: response.status, error: response.body.error },
+    { status, error: code },
+  );
 }
 
 /**
@@ -127,12 +143,18 @@ export function defineScenarioSuite(storage, makeApp) {
         body: { ...body, title: '   ' },
       });
 
+      const padded = await call(app, 'POST', '/cycles', {
+        user: data.users.admin,
+        body: { ...body, title: '  ГБ-2029  ' },
+      });
+
       assert.equal(created.status, 201);
       assert.equal(created.body.phase, 'planned');
-      assert.equal(forbidden.status, 403);
-      assert.equal(anonymous.status, 401);
-      assert.equal(overlapping.status, 422);
-      assert.equal(blankTitle.status, 422);
+      assert.equal(padded.body.title, 'ГБ-2029');
+      assertError(forbidden, 403, 'forbidden');
+      assertError(anonymous, 401, 'unauthenticated');
+      assertError(overlapping, 422, 'invalid_cycle');
+      assertError(blankTitle, 422, 'invalid_cycle');
     });
 
     it('мешканець подає заявку, вона з автором у списку раунду', async () => {
@@ -154,6 +176,13 @@ export function defineScenarioSuite(storage, makeApp) {
         fullName: 'Наталія Савченко',
       });
       assert.equal(mine.votes, 0);
+
+      const large = await call(app, 'POST', `/cycles/${cycleId}/projects`, {
+        user: data.users.natalia,
+        body: { category: 'large', title: 'Сквер', cost: 100_000_000 },
+      });
+      assert.equal(large.status, 201);
+      assert.equal(large.body.category, 'large');
     });
 
     it('подання відхиляється поза фазою, понад ліміт, без верифікації і не мешканцем', async () => {
@@ -177,10 +206,10 @@ export function defineScenarioSuite(storage, makeApp) {
         body,
       });
 
-      assert.equal(late.status, 422);
-      assert.equal(expensive.status, 422);
-      assert.equal(unverified.status, 422);
-      assert.equal(moderator.status, 403);
+      assertError(late, 422, 'submission_rejected');
+      assertError(expensive, 422, 'submission_rejected');
+      assertError(unverified, 422, 'submission_rejected');
+      assertError(moderator, 403, 'forbidden');
     });
 
     it('[AC-2.3] повтор подання з тим самим Idempotency-Key не створює дубля', async () => {
@@ -209,7 +238,7 @@ export function defineScenarioSuite(storage, makeApp) {
       assert.equal(first.status, 201);
       assert.equal(repeat.status, 200);
       assert.equal(repeat.body.id, first.body.id);
-      assert.equal(otherBody.status, 409);
+      assertError(otherBody, 409, 'conflict');
       assert.equal(afterList.body.length, before.body.length + 1);
     });
 
@@ -235,11 +264,26 @@ export function defineScenarioSuite(storage, makeApp) {
       const details = await call(app, 'GET', `/projects/${library.id}`);
 
       assert.equal(approved.status, 201);
-      assert.equal(again.status, 409);
-      assert.equal(noReason.status, 422);
-      assert.equal(byResident.status, 403);
+      assertError(again, 409, 'review_rejected');
+      assertError(noReason, 422, 'review_rejected');
+      assertError(byResident, 403, 'forbidden');
       assert.equal(details.body.project.status, 'approved');
       assert.equal(details.body.review.moderatorId, data.users.moderator.id);
+    });
+
+    it('[AC-3.8] модератор відхиляє заявку з причиною, вона стає rejected', async () => {
+      const { stadium } = data.projects;
+
+      const rejected = await call(app, 'POST', `/projects/${stadium.id}/review`, {
+        user: data.users.moderator,
+        body: { decision: 'reject', reason: '  не за адресою  ' },
+      });
+      const details = await call(app, 'GET', `/projects/${stadium.id}`);
+
+      assert.equal(rejected.status, 201);
+      assert.equal(details.body.project.status, 'rejected');
+      assert.equal(details.body.review.decision, 'reject');
+      assert.equal(details.body.review.reason, 'не за адресою');
     });
 
     it('мешканець голосує; повторний голос 409; голоси видно під час голосування', async () => {
@@ -263,7 +307,7 @@ export function defineScenarioSuite(storage, makeApp) {
       const afterList = await call(app, 'GET', `/cycles/${cycleId}/projects`);
 
       assert.equal(vote.status, 201);
-      assert.equal(repeat.status, 409);
+      assertError(repeat, 409, 'vote_rejected');
       assert.equal(mine.body.length, 1);
       assert.equal(votesOf(afterList), votesOf(before) + 1);
     });
@@ -291,9 +335,9 @@ export function defineScenarioSuite(storage, makeApp) {
         },
       );
 
-      assert.equal(forRejected.status, 422);
-      assert.equal(tooEarly.status, 422);
-      assert.equal(byAdmin.status, 403);
+      assertError(forRejected, 422, 'vote_rejected');
+      assertError(tooEarly, 422, 'vote_rejected');
+      assertError(byAdmin, 403, 'forbidden');
     });
 
     it('[AC-2.2] 5 одночасних голосів при max_votes = 2 дають рівно 2', async () => {
@@ -348,11 +392,11 @@ export function defineScenarioSuite(storage, makeApp) {
         [stop?.id, gym?.id],
       );
       assert.equal(results.body[0].title, 'Зупинка з навісом');
-      assert.equal(early.status, 422);
-      assert.equal(byResident.status, 403);
+      assertError(early, 422, 'tally_rejected');
+      assertError(byResident, 403, 'forbidden');
     });
 
-    it('звіт про реалізацію: лише для переможця і не більше вартості', async () => {
+    it('[AC-3.9] звіт про реалізацію: лише для переможця, не більше вартості, ключ не перевикористати', async () => {
       const cycleId = data.cycles.finished.id;
       const [stop, , flowers] = data.projects.finished;
       const winner = /** @type {{ id: number, cost: number }} */ (stop);
@@ -371,6 +415,12 @@ export function defineScenarioSuite(storage, makeApp) {
         body: { spent: 10_000_000, note: 'закуплено навіс' },
         headers,
       });
+      // AC-3.9: той самий ключ з іншою сумою — не повтор, а конфлікт
+      const otherBody = await call(app, 'POST', url, {
+        user: data.users.admin,
+        body: { spent: 20_000_000, note: 'закуплено навіс' },
+        headers,
+      });
       const tooMuch = await call(app, 'POST', url, {
         user: data.users.admin,
         body: { spent: winner.cost },
@@ -384,12 +434,13 @@ export function defineScenarioSuite(storage, makeApp) {
       assert.equal(report.status, 201);
       assert.equal(replay.status, 200);
       assert.equal(replay.body.id, report.body.id);
-      assert.equal(tooMuch.status, 422);
-      assert.equal(forLoser.status, 422);
+      assertError(otherBody, 409, 'conflict');
+      assertError(tooMuch, 422, 'progress_rejected');
+      assertError(forLoser, 422, 'progress_rejected');
       assert.equal(list.body.length, 1);
     });
 
-    it('[AC-2.7] помилки мають статус і тіло { error, message, bpId }', async () => {
+    it('[AC-2.7] [AC-3.9] помилки мають статус, код і тіло { error, message, bpId }', async () => {
       const missing = await call(app, 'GET', '/projects/999999');
       const badBody = await call(
         app,
@@ -411,12 +462,12 @@ export function defineScenarioSuite(storage, makeApp) {
         headers: { 'x-request-id': 'trace-42' },
       });
 
-      assert.equal(missing.status, 404);
+      assertError(missing, 404, 'not_found');
       assert.equal(badBody.status, 400);
       assert.equal(badBody.body.error, 'validation_failed');
-      assert.equal(badUser.status, 401);
-      assert.equal(unknownUser.status, 401);
-      assert.equal(noRoute.status, 404);
+      assertError(badUser, 401, 'unauthenticated');
+      assertError(unknownUser, 401, 'unauthenticated');
+      assertError(noRoute, 404, 'not_found');
       for (const response of [missing, badBody, badUser, unknownUser, noRoute]) {
         assert.deepEqual(Object.keys(response.body).slice(0, 3), [
           'error',

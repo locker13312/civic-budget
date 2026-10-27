@@ -35,7 +35,7 @@ const AC_ROW = /^\|\s*(AC-[^|\s]+)\s*\|([^|]*)\|([^|]*)\|\s*$/gm;
 const AC_ID = /^AC-(\d+)\.(\d+)$/;
 const AC_TAG = /\[(AC-\d+\.\d+)\]/g;
 // `npm run x` або історичне `make x` (до adr/0006) посилаються на npm-скрипт x
-const MAKE_REF = /`(?:make|npm run) ([\w-]+)`/g;
+const MAKE_REF = /`(?:make|npm run) ([\w:-]+)`/g;
 
 /**
  * Текст без блоків коду і діаграм: вони не рахуються в обсяг.

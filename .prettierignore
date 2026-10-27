@@ -5,3 +5,5 @@ dist/
 coverage/
 tasks/**/reports/
 .civic-tmp-*/
+/reports/
+/.stryker-tmp/

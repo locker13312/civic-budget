@@ -1,0 +1,30 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "testRunner": "tap",
+  "tap": {
+    "testFiles": [
+      "test/unit/{boundaries,cycles,identity,projects,voting,results}*.test.js",
+      "test/api/memory.test.js"
+    ],
+    "nodeArgs": ["--test-reporter=tap"]
+  },
+  "mutate": ["src/*/domain.js", "src/*/service.js"],
+  "coverageAnalysis": "perTest",
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation.json"
+  },
+  "thresholds": {
+    "high": 85,
+    "low": 75,
+    "break": 70
+  },
+  "concurrency": 4,
+  "tempDirName": ".stryker-tmp",
+  "cleanTempDir": "always",
+  "tsconfigFile": "stryker-has-no-tsconfig.json",
+  "$comment": "tsconfigFile вказує на неіснуючий файл: TypeScript 7 не має JS API, яким Stryker переписує tsconfig, а типи JSDoc під час мутацій не потрібні"
+}
