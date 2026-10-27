@@ -88,7 +88,21 @@ export function score(report) {
  * @param {string} text
  * @returns {string}
  */
-const cell = (text) => text.replace(/\|/g, '\\|').replace(/\s+/g, ' ').slice(0, 90);
+const cell = (text) => text.replace(/\|/g, '\\|').replace(/\s+/g, ' ');
+
+/**
+ * Заміна мутанта в комірці: довгі блоки скорочено, порожній рядок названо.
+ *
+ * @param {string} replacement
+ * @returns {string}
+ */
+const shown = (replacement) => {
+  const text = cell(replacement);
+  if (text === '""' || text === '``') {
+    return 'порожній рядок';
+  }
+  return `\`${text.length > 60 ? `${text.slice(0, 57)}...` : text}\``;
+};
 
 function main() {
   if (!existsSync(SOURCE)) {
@@ -105,7 +119,7 @@ function main() {
   const { killed, total, score: value } = score(report);
   const rows = list.map((s) => {
     const known = classes[s.key];
-    return `| ${s.file}:${s.line} | ${s.status} | ${s.mutator} → \`${cell(s.replacement)}\` | ${known?.class ?? '**не класифіковано**'} | ${cell(known?.reason ?? '')} |`;
+    return `| ${s.file}:${s.line} | ${s.status} | ${s.mutator} → ${shown(s.replacement)} | ${known?.class ?? '**не класифіковано**'} | ${cell(known?.reason ?? '')} |`;
   });
   writeFileSync(
     TABLE_FILE,
