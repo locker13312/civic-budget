@@ -9,6 +9,7 @@ export {
   phaseAt,
 } from './domain.js';
 export { createMemoryCyclesRepository } from './repository.memory.js';
+export { createPgCyclesRepository } from './repository.pg.js';
 export { createCyclesService } from './service.js';
 
 /** @typedef {import('./domain.js').Cycle} Cycle */

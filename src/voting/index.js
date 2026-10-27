@@ -1,6 +1,7 @@
 // голоси і правила голосування
 export { VoteError, castVote, countVotes } from './domain.js';
 export { createMemoryVotingRepository } from './repository.memory.js';
+export { createPgVotingRepository } from './repository.pg.js';
 export { createVotingService } from './service.js';
 
 /** @typedef {import('./domain.js').Vote} Vote */

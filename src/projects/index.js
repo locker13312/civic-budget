@@ -8,6 +8,7 @@ export {
   submit,
 } from './domain.js';
 export { createMemoryProjectsRepository } from './repository.memory.js';
+export { createPgProjectsRepository } from './repository.pg.js';
 export { createProjectsService } from './service.js';
 
 /** @typedef {import('./domain.js').Project} Project */
