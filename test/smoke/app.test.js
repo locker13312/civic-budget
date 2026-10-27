@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { afterEach, describe, test } from 'node:test';
 
 import { resetGitShaCache, version } from '../../src/platform/index.js';
-import { buildApp } from '../../src/web/index.js';
+import { memoryApp } from '../support/app.js';
 
 describe('[AC-1.5] smoke: застосунок стартує', () => {
   afterEach(() => {
@@ -12,7 +12,9 @@ describe('[AC-1.5] smoke: застосунок стартує', () => {
   });
 
   test('/health повертає 200', async () => {
-    const response = await buildApp().inject({ method: 'GET', url: '/health' });
+    const response = await (
+      await memoryApp()
+    ).app.inject({ method: 'GET', url: '/health' });
 
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.json(), { status: 'ok' });
@@ -22,7 +24,9 @@ describe('[AC-1.5] smoke: застосунок стартує', () => {
     process.env.GIT_SHA = 'abc123def4567890';
     resetGitShaCache();
 
-    const response = await buildApp().inject({ method: 'GET', url: '/version' });
+    const response = await (
+      await memoryApp()
+    ).app.inject({ method: 'GET', url: '/version' });
 
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.json(), { version, sha: 'abc123def456' });
@@ -42,7 +46,9 @@ describe('[AC-1.5] smoke: застосунок стартує', () => {
     delete process.env.GIT_SHA;
     resetGitShaCache();
 
-    const response = await buildApp().inject({ method: 'GET', url: '/version' });
+    const response = await (
+      await memoryApp()
+    ).app.inject({ method: 'GET', url: '/version' });
 
     assert.equal(response.json().sha, head);
   });
