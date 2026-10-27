@@ -23,7 +23,8 @@
     "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:migrate": "node scripts/db.js migrate",
-    "db:seed": "node scripts/db.js seed"
+    "db:seed": "node scripts/db.js seed",
+    "db:reset": "node scripts/db.js reset"
   },
   "repository": {
     "type": "git",

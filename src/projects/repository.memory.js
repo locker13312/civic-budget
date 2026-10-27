@@ -34,7 +34,7 @@ export function createMemoryProjectsRepository() {
           replayed: true,
         };
       }
-      const project = Object.freeze({ ...draft, id: nextId++ });
+      const project = Object.freeze({ id: nextId++, ...draft });
       projects.set(project.id, project);
       if (keyId) {
         keys.set(keyId, { projectId: project.id, requestHash });

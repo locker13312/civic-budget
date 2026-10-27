@@ -52,7 +52,7 @@ export function createMemoryResultsRepository() {
         return { report, replayed: true };
       }
       const draft = decide(reports.filter((r) => r.projectId === projectId));
-      const report = Object.freeze({ ...draft, id: nextId++ });
+      const report = Object.freeze({ id: nextId++, ...draft });
       reports.push(report);
       if (keyId) {
         keys.set(keyId, { reportId: report.id, requestHash });
