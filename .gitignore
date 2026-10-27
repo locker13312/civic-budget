@@ -14,3 +14,7 @@ coverage/
 .env
 .idea/
 .DS_Store
+
+# звіти Stryker (копія для здачі — у tasks/03-testing/reports)
+/reports/
+/.stryker-tmp/
