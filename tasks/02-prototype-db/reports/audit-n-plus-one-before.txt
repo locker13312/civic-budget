@@ -1,0 +1,7 @@
+# probe n-plus-one, до виправлень
+# коміт: be2d238a9a77, дата: 2026-10-27 13:57 UTC
+# відтворити: git checkout be2d238a9a77 && node tasks/02-prototype-db/reports/probes/n-plus-one.js
+
+GET /cycles/3/projects, 7 заявок: 11 запитів
+GET /cycles/4/results, 4 підсумки: 7 запитів
+GET /cycles/3/projects, 17 заявок: 21 запитів

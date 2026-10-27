@@ -25,7 +25,7 @@ const NO_TRY = {
 };
 
 export default [
-  { ignores: ['dist/', 'coverage/', '.civic-tmp-*/'] },
+  { ignores: ['dist/', 'coverage/', '.civic-tmp-*/', 'tasks/**/reports/'] },
   js.configs.recommended,
   jsdoc.configs['flat/recommended-typescript-flavor'],
   {
