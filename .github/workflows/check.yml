@@ -1,7 +1,7 @@
 name: check
 
-# хуки можна обійти через --no-verify, тому той самий make check іде на кожен PR;
-# Windows у матриці, бо студент працює на Windows (Git Bash + make)
+# хуки можна обійти через --no-verify, тому той самий npm run check іде на кожен PR;
+# Windows у матриці, бо студент працює на Windows (Git Bash)
 on:
   pull_request:
   push:
@@ -23,13 +23,10 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - name: make на Windows
-        if: runner.os == 'Windows'
-        run: choco install make --no-progress -y
       - name: setup
-        run: make setup
+        run: npm ci
       - name: check
-        run: make check 2>&1 | tee check.log
+        run: npm run --silent check 2>&1 | tee check.log
         shell: bash -o pipefail {0}
       - uses: actions/upload-artifact@v7
         if: always()

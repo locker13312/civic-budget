@@ -53,8 +53,8 @@ describe('[AC-1.8] перевірка документів', () => {
     assert.notDeepEqual(checkCriteria(SPEC, table, 7, new Set(), new Set()), []);
   });
 
-  test('make-ціль з колонки «Перевірка» має існувати', () => {
-    const table = '| AC-7.1 | щось видно | `make demo` |\n';
+  test('npm-скрипт з колонки «Перевірка» має існувати', () => {
+    const table = '| AC-7.1 | щось видно | `npm run demo` |\n';
 
     assert.deepEqual(checkCriteria(SPEC, table, 7, new Set(), new Set(['demo'])), []);
     assert.notDeepEqual(checkCriteria(SPEC, table, 7, new Set(), new Set()), []);
