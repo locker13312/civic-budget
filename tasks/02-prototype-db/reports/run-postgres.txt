@@ -1,0 +1,28 @@
+# запущений застосунок: postgres
+# коміт: d405e62fa3a4, дата: 2026-10-27 14:08 UTC
+# відтворити: npm run start, потім curl
+
+$ curl -X GET /ready
+{"status":"ready"}
+[200]
+$ curl -X GET /version
+{"version":"0.1.0","sha":"d405e62fa3a4"}
+[200]
+$ curl -X GET /cycles/3/projects
+[{"id":5,"cycleId":3,"authorId":3,"category":"small","title":"Дитячий майданчик на Липовій","cost":30000000,"status":"approved","submittedAt":"2026-08-29T14:08:20.575Z","author":{"id":3,"fullName":"Ірина Шевчук"},"votes":2},{"id":6,"cycleId":3,"authorId":4,"category":"small","title":"Освітлення парку Перемоги","cost":25000000,"status":"app
+[200]
+$ curl -X POST /projects/5/votes (X-User-Id: 9)
+{"voterId":9,"projectId":5,"cycleId":3,"castAt":"2026-10-27T14:08:21.194Z"}
+[201]
+$ curl -X POST /projects/5/votes (X-User-Id: 9)
+{"error":"vote_rejected","message":"ви вже голосували за цей проєкт","bpId":"70286b3a-da8f-4701-b8cb-520abcf22140"}
+[409]
+$ curl -X POST /cycles/4/tally (X-User-Id: 3)
+{"error":"forbidden","message":"операція доступна ролям: admin","bpId":"12a507a9-471a-4791-96c3-4fbb88c552fe"}
+[403]
+$ curl -X POST /cycles/4/tally (X-User-Id: 1)
+[{"projectId":12,"votes":5,"rank":1,"funded":true,"decidedAt":"2026-10-27T14:08:21.227Z"},{"projectId":13,"votes":4,"rank":2,"funded":true,"decidedAt":"2026-10-27T14:08:21.227Z"},{"projectId":14,"votes":3,"rank":3,"funded":false,"decidedAt":"2026-10-27T14:08:21.227Z"},{"projectId":15,"votes":1,"rank":4,"funded":false,"decidedAt":"2026-10-27T14:08:21.227Z"}]
+[200]
+$ curl -X GET /cycles/4/results
+[{"projectId":12,"votes":5,"rank":1,"funded":true,"decidedAt":"2026-10-27T14:08:21.227Z","title":"Зупинка з навісом","category":"small"},{"projectId":13,"votes":4,"rank":2,"funded":true,"decidedAt":"2026-10-27T14:08:21.227Z","title":"Тренажери у дворі","category":"small"},{"projectId":14,"votes":3,"rank":3,"funded":false,"decidedAt":"2026-10-27T14:08:21.227Z","title":
+[200]
