@@ -2,6 +2,28 @@ import js from '@eslint/js';
 import jsdoc from 'eslint-plugin-jsdoc';
 import globals from 'globals';
 
+// R5 зі spec.md: SQL і транзакції лише в */repository.pg.js і src/platform/db
+const SQL_OUTSIDE_REPOSITORIES = [
+  {
+    selector: 'TaggedTemplateExpression[tag.name=/^(sql|tx)$/]',
+    message: 'SQL лише в */repository.pg.js і src/platform/db (R5)',
+  },
+  {
+    selector: "TaggedTemplateExpression > MemberExpression.tag[property.name='sql']",
+    message: 'SQL лише в */repository.pg.js і src/platform/db (R5)',
+  },
+  {
+    selector: 'CallExpression[callee.property.name=/^(tx|begin|unsafe)$/]',
+    message: 'транзакції й сирий SQL лише в репозиторіях (R5)',
+  },
+];
+
+// роути й сервіси не ловлять помилки: їх обробляє один глобальний обробник
+const NO_TRY = {
+  selector: 'TryStatement',
+  message: 'помилки обробляє глобальний обробник (src/web/errors.js), не try/catch',
+};
+
 export default [
   { ignores: ['dist/', 'coverage/', '.civic-tmp-*/'] },
   js.configs.recommended,
@@ -36,6 +58,15 @@ export default [
         },
       ],
     },
+  },
+  {
+    files: ['src/**/*.js'],
+    ignores: ['src/**/repository.pg.js', 'src/platform/db/**'],
+    rules: { 'no-restricted-syntax': ['error', ...SQL_OUTSIDE_REPOSITORIES] },
+  },
+  {
+    files: ['src/web/**/*.js', 'src/*/service.js'],
+    rules: { 'no-restricted-syntax': ['error', ...SQL_OUTSIDE_REPOSITORIES, NO_TRY] },
   },
   {
     files: ['test/**/*.js'],
