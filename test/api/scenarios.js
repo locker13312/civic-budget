@@ -5,6 +5,7 @@ import { after, before, beforeEach, describe, test } from 'node:test';
 
 /**
  * @typedef {import('../../src/seed.js').StaticData} StaticData
+ * @typedef {ReturnType<typeof JSON.parse>} Json тіло відповіді, як його повертає JSON.parse
  * @typedef {{ app: import('fastify').FastifyInstance, data: StaticData, close(): Promise<void> }} TestApp
  * @typedef {{ user?: { id: number }, body?: unknown, headers?: Record<string, string> }} CallOptions
  */
