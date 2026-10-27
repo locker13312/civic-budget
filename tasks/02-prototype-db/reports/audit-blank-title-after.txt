@@ -1,0 +1,6 @@
+# probe blank-title, після виправлення (п. 3 аудиту)
+# дата: 2026-10-27 14:01 UTC
+# відтворити: node tasks/02-prototype-db/reports/probes/blank-title.js
+
+статичні дані: 422 invalid_cycle title=undefined
+PostgreSQL: 422 invalid_cycle title=undefined

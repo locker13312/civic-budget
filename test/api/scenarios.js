@@ -93,7 +93,7 @@ export function defineScenarioSuite(storage, makeApp) {
       assert.equal(one.body.limits.length, 2);
     });
 
-    it('адміністратор створює раунд, інші ролі ні', async () => {
+    it('[AC-2.12] адміністратор створює раунд, інші ролі ні', async () => {
       const day = 24 * 60 * 60 * 1000;
       const at = (/** @type {number} */ days) =>
         new Date(Date.now() + days * day).toISOString();
@@ -121,12 +121,18 @@ export function defineScenarioSuite(storage, makeApp) {
         user: data.users.admin,
         body: { ...body, votingFrom: at(5) },
       });
+      // AC-2.12: обмеження схеми має пару в домені, тож 422 на обох сховищах
+      const blankTitle = await call(app, 'POST', '/cycles', {
+        user: data.users.admin,
+        body: { ...body, title: '   ' },
+      });
 
       assert.equal(created.status, 201);
       assert.equal(created.body.phase, 'planned');
       assert.equal(forbidden.status, 403);
       assert.equal(anonymous.status, 401);
       assert.equal(overlapping.status, 422);
+      assert.equal(blankTitle.status, 422);
     });
 
     it('мешканець подає заявку, вона з автором у списку раунду', async () => {

@@ -52,4 +52,24 @@ describe('[AC-1.7] раунд', () => {
   test('максимальна вартість не більша за бюджет категорії', () => {
     assert.throws(() => makeCategoryLimit(Category.SMALL, 100, 101), CycleError);
   });
+
+  test('назва раунду не може бути порожньою', () => {
+    const cycle = testCycle();
+    assert.throws(
+      () => makeCycle({ ...cycle, title: '  ', limits: [...cycle.limits] }),
+      CycleError,
+    );
+  });
+
+  test('категорія ліміту лише small або large', () => {
+    assert.throws(
+      () =>
+        makeCategoryLimit(
+          /** @type {'small'} */ (/** @type {unknown} */ ('medium')),
+          100,
+          10,
+        ),
+      CycleError,
+    );
+  });
 });

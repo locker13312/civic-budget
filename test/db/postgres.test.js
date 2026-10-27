@@ -315,6 +315,53 @@ describe('PostgreSQL: транзакції, збої, логи', { skip }, () =>
     assert.deepEqual(large, small);
   });
 
+  test('[AC-2.12] кожне check-обмеження схеми має перевірку в домені', async () => {
+    const env = /** @type {NonNullable<Awaited<ReturnType<typeof pgApp>>>} */ (
+      await pgApp()
+    );
+    cleanup.push(env.close);
+    // нове обмеження в міграції без пари в домені ламає цей тест: спершу
+    // правило в domain.js, потім рядок тут (аудит Завдання 2, п. 3)
+    const domainRule = {
+      'category_limits CHECK ((budget > 0))': 'cycles.makeCategoryLimit',
+      "category_limits CHECK ((category = ANY (ARRAY['small'::text, 'large'::text])))":
+        'cycles.makeCategoryLimit',
+      'category_limits CHECK ((max_cost <= budget))': 'cycles.makeCategoryLimit',
+      'category_limits CHECK ((max_cost > 0))': 'cycles.makeCategoryLimit',
+      'cycles CHECK (((submission_from < submission_to) AND (submission_to < voting_from) AND (voting_from < voting_to)))':
+        'cycles.makeCycle',
+      'cycles CHECK ((length(TRIM(BOTH FROM title)) > 0))': 'cycles.makeCycle',
+      'cycles CHECK ((max_votes >= 1))': 'cycles.makeCycle',
+      'cycles CHECK ((min_votes >= 0))': 'cycles.makeCycle',
+      'outcomes CHECK ((rank >= 1))': 'results.tally',
+      'outcomes CHECK ((votes >= 0))': 'results.tally',
+      'progress_reports CHECK ((spent > 0))': 'results.reportProgress',
+      'projects CHECK ((cost > 0))': 'projects.submit',
+      'projects CHECK ((length(TRIM(BOTH FROM title)) > 0))': 'projects.submit',
+      "projects CHECK ((status = ANY (ARRAY['submitted'::text, 'approved'::text, 'rejected'::text])))":
+        'projects.ProjectStatus',
+      "reviews CHECK (((decision = 'approve'::text) OR (length(TRIM(BOTH FROM reason)) > 0)))":
+        'projects.review',
+      "reviews CHECK ((decision = ANY (ARRAY['approve'::text, 'reject'::text])))":
+        'projects.Decision',
+      'users CHECK ((length(TRIM(BOTH FROM full_name)) > 0))': 'identity.register',
+      "users CHECK ((role = ANY (ARRAY['resident'::text, 'moderator'::text, 'admin'::text])))":
+        'identity.register',
+    };
+
+    const rows = await env.db.sql`
+      select c.conrelid::regclass::text || ' ' || pg_get_constraintdef(c.oid) as rule
+      from pg_constraint c join pg_namespace n on n.oid = c.connamespace
+      where c.contype = 'c' and n.nspname = 'public' and c.conrelid <> 0
+      order by 1
+    `;
+
+    assert.deepEqual(
+      rows.map((r) => r.rule),
+      Object.keys(domainRule).sort(),
+    );
+  });
+
   test('[AC-2.9] кожен прогін має окрему базу, локальний PostgreSQL не на 5432–5434', async () => {
     const first =
       /** @type {NonNullable<Awaited<ReturnType<typeof createTestDatabase>>>} */ (

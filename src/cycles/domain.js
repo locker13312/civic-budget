@@ -44,6 +44,9 @@ export class CycleError extends DomainError {
  * @returns {CategoryLimit}
  */
 export function makeCategoryLimit(category, budget, maxCost) {
+  if (!Object.values(Category).includes(category)) {
+    throw new CycleError(`невідома категорія ${category}`);
+  }
   if (!(budget > 0) || !(maxCost > 0)) {
     throw new CycleError('бюджет і максимальна вартість мають бути додатні');
   }
@@ -58,6 +61,9 @@ export function makeCategoryLimit(category, budget, maxCost) {
  * @returns {Cycle}
  */
 export function makeCycle(fields) {
+  if (!fields.title.trim()) {
+    throw new CycleError('назва раунду порожня');
+  }
   const dates = [
     fields.submissionFrom,
     fields.submissionTo,
