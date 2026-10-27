@@ -1,0 +1,259 @@
+// поведінка, яку видно лише на справжній БД: транзакції, збої, логи, ізоляція
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import net from 'node:net';
+import { after, describe, test } from 'node:test';
+
+import { connectDb } from '../../src/platform/db/index.js';
+import {
+  SourceUnavailableError,
+  createLogger,
+  loadSettings,
+} from '../../src/platform/index.js';
+import { call } from '../api/scenarios.js';
+import { captureLogs, pgApp } from '../support/app.js';
+import { ADMIN_URL, createTestDatabase } from '../support/pg.js';
+
+const available =
+  (await createTestDatabase().then(async (db) => {
+    await db?.drop();
+    return db !== null;
+  })) || false;
+const skip = available ? false : 'PostgreSQL недоступний';
+
+/**
+ * TCP-проксі між застосунком і PostgreSQL: зупинка проксі імітує падіння БД.
+ *
+ * @param {number} targetPort
+ */
+async function startProxy(targetPort) {
+  /** @type {Set<net.Socket>} */
+  const sockets = new Set();
+  /** @type {net.Server} */
+  let server;
+  let port = 0;
+
+  const listen = () =>
+    new Promise((resolve) => {
+      server = net.createServer((client) => {
+        const upstream = net.connect(targetPort, '127.0.0.1');
+        for (const socket of [client, upstream]) {
+          sockets.add(socket);
+          socket.on('close', () => sockets.delete(socket));
+          socket.on('error', () => socket.destroy());
+        }
+        client.pipe(upstream).pipe(client);
+      });
+      server.listen(port, '127.0.0.1', () => {
+        port = /** @type {net.AddressInfo} */ (server.address()).port;
+        resolve(port);
+      });
+    });
+
+  await listen();
+  return {
+    port: () => port,
+    stop: () =>
+      new Promise((resolve) => {
+        for (const socket of sockets) {
+          socket.destroy();
+        }
+        server.close(() => resolve(undefined));
+      }),
+    start: listen,
+  };
+}
+
+describe('PostgreSQL: транзакції, збої, логи', { skip }, () => {
+  /** @type {Array<() => Promise<void>>} */
+  const cleanup = [];
+  after(async () => {
+    for (const fn of cleanup.reverse()) {
+      await fn();
+    }
+  });
+
+  test('[AC-2.8] збій посеред транзакції модерації не лишає ні статусу, ні Review', async () => {
+    const env = /** @type {NonNullable<Awaited<ReturnType<typeof pgApp>>>} */ (
+      await pgApp()
+    );
+    cleanup.push(env.close);
+    const { library } = env.data.projects;
+    // тригер ламає вставку Review уже після того, як статус оновлено
+    await env.db.sql.unsafe(`
+      create function fail_review() returns trigger language plpgsql as $$
+      begin
+        if new.reason = 'зламати' then raise exception 'імітований збій'; end if;
+        return new;
+      end $$;
+      create trigger fail_review before insert on reviews
+        for each row execute function fail_review();
+    `);
+
+    const response = await call(env.app, 'POST', `/projects/${library.id}/review`, {
+      user: env.data.users.moderator,
+      body: { decision: 'reject', reason: 'зламати' },
+    });
+    const [project] = await env.db
+      .sql`select status from projects where id = ${library.id}`;
+    const reviews = await env.db
+      .sql`select 1 from reviews where project_id = ${library.id}`;
+
+    assert.equal(response.status, 500);
+    assert.equal(response.body.error, 'internal');
+    assert.equal(project?.status, 'submitted');
+    assert.equal(reviews.length, 0);
+  });
+
+  test('[AC-2.2] одночасні голоси: у таблиці рівно max_votes записів', async () => {
+    const { logger, lines } = captureLogs();
+    const env = /** @type {NonNullable<Awaited<ReturnType<typeof pgApp>>>} */ (
+      await pgApp({ logger })
+    );
+    cleanup.push(env.close);
+    const voter = env.data.users.maria;
+
+    const statuses = await Promise.all(
+      env.data.projects.voting.slice(0, 5).map(async (p) => {
+        const r = await call(env.app, 'POST', `/projects/${p.id}/votes`, { user: voter });
+        return r.status;
+      }),
+    );
+    const rows = await env.db.sql`
+      select count(*)::int as n from votes
+      where voter_id = ${voter.id} and cycle_id = ${env.data.cycles.voting.id}
+    `;
+
+    assert.deepEqual(statuses.sort(), [201, 201, 422, 422, 422]);
+    assert.equal(rows[0]?.n, 2);
+    // конфлікти SERIALIZABLE не виходять назовні: їх повторює platform/db/tx.js
+    assert.equal(
+      lines.filter((l) => l.msg === 'неочікувана помилка').length,
+      0,
+      'жодна спроба не завершилась 500',
+    );
+  });
+
+  test('[AC-2.4] без БД сервер не стартує і пояснює чому', async () => {
+    const started = Date.now();
+    const child = spawn(process.execPath, ['src/server.js'], {
+      env: {
+        ...process.env,
+        CIVIC_DATABASE_URL: 'postgres://civic:civic@127.0.0.1:1/none',
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let output = '';
+    child.stdout.on('data', (chunk) => (output += chunk));
+    child.stderr.on('data', (chunk) => (output += chunk));
+    const code = await new Promise((resolve) => child.on('exit', resolve));
+
+    assert.equal(code, 1);
+    assert.match(output, /сервер не запущено: не вдалося підключитися до БД/);
+    assert.doesNotMatch(output, /civic:civic@/, 'пароль не потрапляє в лог');
+    assert.ok(Date.now() - started < 10_000, 'падає одразу, а не на першому запиті');
+  });
+
+  test('[AC-2.4] connectDb падає з SourceUnavailableError, якщо БД недоступна', async () => {
+    await assert.rejects(
+      connectDb({
+        url: 'postgres://civic:civic@127.0.0.1:1/none',
+        logger: createLogger({ level: 'silent' }),
+        connectTimeout: 1,
+      }),
+      SourceUnavailableError,
+    );
+  });
+
+  test('[AC-2.4] БД впала під час роботи: 503 і /ready 503, після відновлення працює', async () => {
+    const admin = new URL(ADMIN_URL);
+    const proxy = await startProxy(Number(admin.port));
+    cleanup.push(proxy.stop);
+    const env = /** @type {NonNullable<Awaited<ReturnType<typeof pgApp>>>} */ (
+      await pgApp({ port: proxy.port() })
+    );
+    cleanup.push(env.close);
+
+    const before = await call(env.app, 'GET', '/cycles');
+    await proxy.stop();
+    const down = await call(env.app, 'GET', '/cycles');
+    const notReady = await call(env.app, 'GET', '/ready');
+    const health = await call(env.app, 'GET', '/health');
+    await proxy.start();
+    const recovered = await call(env.app, 'GET', '/cycles');
+    const ready = await call(env.app, 'GET', '/ready');
+
+    assert.equal(before.status, 200);
+    assert.equal(down.status, 503);
+    assert.equal(down.body.error, 'source_unavailable');
+    assert.equal(down.headers['retry-after'], '2');
+    assert.equal(notReady.status, 503);
+    assert.equal(health.status, 200, 'процес живий, хоч БД і недоступна');
+    assert.equal(recovered.status, 200);
+    assert.equal(ready.status, 200);
+  });
+
+  test('[AC-2.5] bpId і користувач у кожному рядку логу з роуту, сервісу й репозиторію', async () => {
+    const { logger, lines } = captureLogs();
+    const env = /** @type {NonNullable<Awaited<ReturnType<typeof pgApp>>>} */ (
+      await pgApp({ logger })
+    );
+    cleanup.push(env.close);
+    const user = env.data.users.natalia;
+    lines.length = 0;
+
+    const response = await call(
+      env.app,
+      'POST',
+      `/cycles/${env.data.cycles.submission.id}/projects`,
+      {
+        user,
+        body: { category: 'small', title: 'Ліхтарі в парку', cost: 1_000_000 },
+        headers: { 'x-request-id': 'bp-test-1' },
+      },
+    );
+
+    const mine = lines.filter((l) => l.bpId === 'bp-test-1');
+    const auth = mine.findIndex((l) => l.userId === user.id);
+    assert.equal(response.status, 201);
+    assert.equal(lines.filter((l) => !l.bpId).length, 0, 'немає рядків без bpId');
+    assert.ok(
+      mine.some((l) => l.msg === 'sql'),
+      'є рядок з репозиторію',
+    );
+    assert.ok(
+      mine.some((l) => l.msg === 'заявку подано'),
+      'є рядок із сервісу',
+    );
+    assert.ok(
+      mine.some((l) => l.msg === 'запит виконано'),
+      'є рядок з роуту',
+    );
+    // до автентифікації є лише запит пошуку самого користувача
+    assert.ok(auth >= 0 && auth <= 1);
+    assert.ok(mine.slice(auth).every((l) => l.userId === user.id));
+  });
+
+  test('[AC-2.9] кожен прогін має окрему базу, локальний PostgreSQL не на 5432–5434', async () => {
+    const first =
+      /** @type {NonNullable<Awaited<ReturnType<typeof createTestDatabase>>>} */ (
+        await createTestDatabase()
+      );
+    const second =
+      /** @type {NonNullable<Awaited<ReturnType<typeof createTestDatabase>>>} */ (
+        await createTestDatabase()
+      );
+    cleanup.push(first.drop, second.drop);
+    const defaults = new URL(loadSettings({}).databaseUrl);
+
+    assert.notEqual(first.name, second.name);
+    assert.match(first.name, /^civic_test_/);
+    assert.equal(defaults.port, '55432');
+    for (const url of [defaults, new URL(ADMIN_URL)]) {
+      assert.ok(
+        !['5432', '5433', '5434'].includes(url.port),
+        `${url.port} зайнятий іншими`,
+      );
+    }
+  });
+});
