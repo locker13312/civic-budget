@@ -120,3 +120,50 @@ describe('[AC-1.7] модерація', () => {
     );
   });
 });
+
+// кожен результат рішення модератора має свій тест (AC-3.8). Успішне
+// відхилення раніше не перевірялось: мутант «рішення завжди approve»
+// виживав (аудит Завдання 3, п. 2)
+describe('[AC-3.8] кожен результат модерації', () => {
+  test('відхилення змінює статус на rejected і зберігає обрізану причину', () => {
+    const { project, review: decided } = decide(submitted(testCycle()), {
+      decision: Decision.REJECT,
+      reason: '  не за адресою  ',
+    });
+
+    assert.equal(project.status, ProjectStatus.REJECTED);
+    assert.equal(project.status, 'rejected');
+    assert.equal(decided.decision, Decision.REJECT);
+    assert.equal(decided.reason, 'не за адресою');
+    assert.deepEqual(decided.decidedAt, IN_REVIEW);
+  });
+
+  test('модерувати можна вже під час подання', () => {
+    const { project } = decide(submitted(testCycle()), { now: IN_SUBMISSION });
+
+    assert.equal(project.status, ProjectStatus.APPROVED);
+  });
+
+  test('кожна відмова має код review_rejected і свій вид', () => {
+    const project = submitted(testCycle());
+    /** @type {Array<[Partial<Parameters<typeof review>[1]>, string]>} */
+    const cases = [
+      [{ moderator: testUser(5) }, 'forbidden'],
+      [{ cycle: testCycle({ id: 2 }) }, 'rule'],
+      [{ now: IN_VOTING }, 'rule'],
+      [{ decision: Decision.REJECT, reason: '' }, 'rule'],
+    ];
+    for (const [overrides, kind] of cases) {
+      assert.throws(() => decide(project, overrides), { code: 'review_rejected', kind });
+    }
+    const { project: approved } = decide(project);
+    assert.throws(() => decide(approved), { code: 'review_rejected', kind: 'conflict' });
+  });
+
+  test('відмова в поданні має код submission_rejected', () => {
+    assert.throws(() => submitted(testCycle(), { cost: 0 }), {
+      code: 'submission_rejected',
+      kind: 'rule',
+    });
+  });
+});

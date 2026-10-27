@@ -243,6 +243,21 @@ export function defineScenarioSuite(storage, makeApp) {
       assert.equal(details.body.review.moderatorId, data.users.moderator.id);
     });
 
+    it('[AC-3.8] модератор відхиляє заявку з причиною, вона стає rejected', async () => {
+      const { stadium } = data.projects;
+
+      const rejected = await call(app, 'POST', `/projects/${stadium.id}/review`, {
+        user: data.users.moderator,
+        body: { decision: 'reject', reason: '  не за адресою  ' },
+      });
+      const details = await call(app, 'GET', `/projects/${stadium.id}`);
+
+      assert.equal(rejected.status, 201);
+      assert.equal(details.body.project.status, 'rejected');
+      assert.equal(details.body.review.decision, 'reject');
+      assert.equal(details.body.review.reason, 'не за адресою');
+    });
+
     it('мешканець голосує; повторний голос 409; голоси видно під час голосування', async () => {
       const [playground] = data.projects.voting;
       const target = /** @type {{ id: number }} */ (playground);
