@@ -353,11 +353,12 @@ describe('PostgreSQL: транзакції, збої, логи', { skip }, () =>
       select c.conrelid::regclass::text || ' ' || pg_get_constraintdef(c.oid) as rule
       from pg_constraint c join pg_namespace n on n.oid = c.connamespace
       where c.contype = 'c' and n.nspname = 'public' and c.conrelid <> 0
-      order by 1
     `;
 
+    // сортуємо в JS: порядок order by залежить від collation бази (у CI
+    // en_US.utf8 ставить '>' і '<' інакше, ніж побайтовий C)
     assert.deepEqual(
-      rows.map((r) => r.rule),
+      rows.map((r) => String(r.rule)).sort(),
       Object.keys(domainRule).sort(),
     );
   });
