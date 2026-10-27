@@ -138,6 +138,28 @@ case "$task" in
     stop_server
   done
   ;;
+03-*)
+  # рівні тестів, покриття з порогами, мутаційне тестування
+  for level in unit integration e2e; do
+    {
+      header "тести: $level" "npm run test:$level"
+      npm run --silent "test:$level" 2>&1
+    } | strip >"$out/tests-$level.txt"
+  done
+  {
+    header "покриття unit-тестами модуля results (поріг 100%)" "npm run coverage:unit"
+    npm run --silent coverage:unit 2>&1 | sed -n '/start of coverage report/,$p'
+  } | strip >"$out/coverage-unit.txt"
+  {
+    header "покриття всіма тестами (поріг гілок 80%)" "npm run coverage"
+    npm run --silent coverage 2>&1 | sed -n '/start of coverage report/,$p'
+  } | strip >"$out/coverage.txt"
+  {
+    header "мутаційне тестування (поріг 70%)" "npm run mutation"
+    npm run --silent mutation 2>&1 | grep -vE '^\s*$|INFO (ProjectReader|Instrumenter|ConcurrencyTokenProvider|DryRunExecutor|MutationTestExecutor Done)|^Mutant survived|^\[(Survived|NoCoverage)\]' |
+      sed -n '/% Mutation score/,$p'
+  } | strip >"$out/mutation.txt"
+  ;;
 esac
 
 echo "звіти записано в $out"
