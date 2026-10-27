@@ -41,16 +41,39 @@ const int8 = {
  * Пул з'єднань, створений явно на старті. `select now()` одразу перевіряє,
  * що БД доступна: без неї процес не стартує, а не падає на першому запиті.
  *
- * @param {{ url: string, logger: import('pino').Logger, max?: number, connectTimeout?: number }} options
+ * Таймаути на рівні сесії: запит довше statementTimeoutMs або очікування
+ * блокування довше lockTimeoutMs завершуються помилкою, яка стає 503, а не
+ * вічним очікуванням (аудит Завдання 2, п. 2).
+ *
+ * @param {{
+ *   url: string,
+ *   logger: import('pino').Logger,
+ *   max?: number,
+ *   connectTimeout?: number,
+ *   statementTimeoutMs?: number,
+ *   lockTimeoutMs?: number,
+ * }} options
  * @returns {Promise<Db>}
  */
-export async function connectDb({ url, logger, max = 10, connectTimeout = 5 }) {
+export async function connectDb({
+  url,
+  logger,
+  max = 10,
+  connectTimeout = 5,
+  statementTimeoutMs = 5000,
+  lockTimeoutMs = 2000,
+}) {
   const sql = postgres(url, {
     max,
     connect_timeout: connectTimeout,
     idle_timeout: 30,
     max_lifetime: 30 * 60,
     onnotice: () => {},
+    connection: {
+      statement_timeout: statementTimeoutMs,
+      lock_timeout: lockTimeoutMs,
+      idle_in_transaction_session_timeout: 10 * statementTimeoutMs,
+    },
     types: { int8 },
     transform: { undefined: null },
     debug: (_connection, query) => {

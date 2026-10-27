@@ -4,6 +4,8 @@ import { spawn } from 'node:child_process';
 import net from 'node:net';
 import { after, describe, test } from 'node:test';
 
+import postgres from 'postgres';
+
 import { connectDb } from '../../src/platform/db/index.js';
 import {
   SourceUnavailableError,
@@ -232,6 +234,38 @@ describe('PostgreSQL: транзакції, збої, логи', { skip }, () =>
     // до автентифікації є лише запит пошуку самого користувача
     assert.ok(auth >= 0 && auth <= 1);
     assert.ok(mine.slice(auth).every((l) => l.userId === user.id));
+  });
+
+  test('[AC-2.11] заблокована таблиця дає 503 за обмежений час, а не очікування', async () => {
+    const env = /** @type {NonNullable<Awaited<ReturnType<typeof pgApp>>>} */ (
+      await pgApp()
+    );
+    cleanup.push(env.close);
+    const locker = postgres(env.database.url, { max: 1, onnotice: () => {} });
+    const session = await locker.reserve();
+    await session`begin`;
+    await session`lock table projects in access exclusive mode`;
+
+    const started = Date.now();
+    const response = await call(
+      env.app,
+      'GET',
+      `/cycles/${env.data.cycles.voting.id}/projects`,
+    );
+    const elapsed = Date.now() - started;
+    await session`rollback`;
+    session.release();
+    await locker.end();
+    const afterUnlock = await call(
+      env.app,
+      'GET',
+      `/cycles/${env.data.cycles.voting.id}/projects`,
+    );
+
+    assert.equal(response.status, 503);
+    assert.equal(response.body.error, 'source_unavailable');
+    assert.ok(elapsed < 4000, `відповідь за ${elapsed} мс`);
+    assert.equal(afterUnlock.status, 200);
   });
 
   test('[AC-2.10] списки коштують сталу кількість запитів: 7 і 17 елементів', async () => {

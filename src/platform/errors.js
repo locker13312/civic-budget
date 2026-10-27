@@ -77,6 +77,9 @@ const UNAVAILABLE_CODES = new Set([
   '57P01',
   '57P02',
   '57P03',
+  // БД відповідає, але не вчасно: statement_timeout і lock_timeout (аудит, п. 2)
+  '57014',
+  '55P03',
 ]);
 
 /**
