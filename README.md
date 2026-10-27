@@ -68,4 +68,4 @@ Windows](https://git-scm.com/download/win); команди запускайте 
 | Завдання | DEFENSE |
 |---|---|
 | 1. Фундамент | [tasks/01-foundation/DEFENSE.md](tasks/01-foundation/DEFENSE.md) |
-| 2. Прототип → БД | [tasks/02-prototype-db/DEFENSE.md](tasks/02-prototype-db/DEFENSE.md) |
+| 2. Прототип → БД | DEFENSE у Classroom; аудит: [tasks/02-prototype-db/audit.md](tasks/02-prototype-db/audit.md) |
