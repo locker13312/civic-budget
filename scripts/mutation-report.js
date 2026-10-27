@@ -62,7 +62,10 @@ export function survivors(report) {
       });
     }
   }
-  return found.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line);
+  return found.sort(
+    (a, b) =>
+      a.file.localeCompare(b.file) || a.line - b.line || a.key.localeCompare(b.key),
+  );
 }
 
 /**
