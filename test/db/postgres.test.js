@@ -1,7 +1,6 @@
 // поведінка, яку видно лише на справжній БД: транзакції, збої, логи, ізоляція
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import net from 'node:net';
 import { after, describe, test } from 'node:test';
 
 import postgres from 'postgres';
@@ -15,6 +14,7 @@ import {
 import { call } from '../api/scenarios.js';
 import { captureLogs, pgApp } from '../support/app.js';
 import { ADMIN_URL, createTestDatabase } from '../support/pg.js';
+import { startProxy } from '../support/proxy.js';
 
 const available =
   (await createTestDatabase().then(async (db) => {
@@ -22,49 +22,6 @@ const available =
     return db !== null;
   })) || false;
 const skip = available ? false : 'PostgreSQL недоступний';
-
-/**
- * TCP-проксі між застосунком і PostgreSQL: зупинка проксі імітує падіння БД.
- *
- * @param {number} targetPort
- */
-async function startProxy(targetPort) {
-  /** @type {Set<net.Socket>} */
-  const sockets = new Set();
-  /** @type {net.Server} */
-  let server;
-  let port = 0;
-
-  const listen = () =>
-    new Promise((resolve) => {
-      server = net.createServer((client) => {
-        const upstream = net.connect(targetPort, '127.0.0.1');
-        for (const socket of [client, upstream]) {
-          sockets.add(socket);
-          socket.on('close', () => sockets.delete(socket));
-          socket.on('error', () => socket.destroy());
-        }
-        client.pipe(upstream).pipe(client);
-      });
-      server.listen(port, '127.0.0.1', () => {
-        port = /** @type {net.AddressInfo} */ (server.address()).port;
-        resolve(port);
-      });
-    });
-
-  await listen();
-  return {
-    port: () => port,
-    stop: () =>
-      new Promise((resolve) => {
-        for (const socket of sockets) {
-          socket.destroy();
-        }
-        server.close(() => resolve(undefined));
-      }),
-    start: listen,
-  };
-}
 
 describe('PostgreSQL: транзакції, збої, логи', { skip }, () => {
   /** @type {Array<() => Promise<void>>} */

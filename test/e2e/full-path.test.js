@@ -2,94 +2,30 @@
 // Раунд створюється з фазами по 1–2 секунди, тест чекає справжній час:
 // у коді застосунку немає тестових «гачків» для годинника.
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { createServer } from 'node:net';
 import { after, before, describe, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { fileURLToPath } from 'node:url';
 
 import { createTestDatabase } from '../support/pg.js';
+import { startServer } from '../support/server.js';
 
-const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const database = await createTestDatabase();
 
-/** @returns {Promise<number>} */
-const freePort = () =>
-  new Promise((resolve) => {
-    const server = createServer();
-    server.listen(0, '127.0.0.1', () => {
-      const { port } = /** @type {import('node:net').AddressInfo} */ (server.address());
-      server.close(() => resolve(port));
-    });
-  });
-
-/**
- * @param {string[]} args
- * @param {NodeJS.ProcessEnv} env
- * @returns {Promise<void>}
- */
-const run = (args, env) =>
-  new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, { cwd: ROOT, env, stdio: 'ignore' });
-    child.on('exit', (code) =>
-      code === 0 ? resolve() : reject(new Error(`${args} → ${code}`)),
-    );
-  });
-
 describe('[AC-3.4] E2E: повний шлях від раунду до звіту', { skip: !database }, () => {
-  /** @type {import('node:child_process').ChildProcess} */
+  /** @type {Awaited<ReturnType<typeof startServer>>} */
   let server;
-  let base = '';
+  /** @type {Awaited<ReturnType<typeof startServer>>['http']} */
+  let http;
 
   before(async () => {
     const db = /** @type {NonNullable<typeof database>} */ (database);
-    const port = await freePort();
-    const env = { ...process.env, CIVIC_DATABASE_URL: db.url, PORT: String(port) };
-    // користувачів через API не створюють: беремо статичних із db:seed
-    await run(['scripts/db.js', 'seed'], env);
-    server = spawn(process.execPath, ['src/server.js'], {
-      cwd: ROOT,
-      env,
-      stdio: 'ignore',
-    });
-    base = `http://127.0.0.1:${port}`;
-    for (let i = 0; i < 100; i += 1) {
-      const ready = await fetch(`${base}/ready`).catch(() => null);
-      if (ready?.ok) {
-        return;
-      }
-      await sleep(100);
-    }
-    throw new Error('сервер не став готовим за 10 с');
+    server = await startServer({ seedUrl: db.url });
+    ({ http } = server);
   });
 
   after(async () => {
-    server?.kill();
+    server?.stop();
     await database?.drop();
   });
-
-  /**
-   * @param {'GET' | 'POST'} method
-   * @param {string} path
-   * @param {{ user?: number, body?: unknown }} [options]
-   * @returns {Promise<{ status: number, body: import('../api/scenarios.js').Json }>}
-   */
-  const http = async (method, path, { user, body } = {}) => {
-    /** @type {Record<string, string>} */
-    const headers = {};
-    if (user) {
-      headers['x-user-id'] = String(user);
-    }
-    if (body !== undefined) {
-      headers['content-type'] = 'application/json';
-    }
-    const response = await fetch(`${base}${path}`, {
-      method,
-      headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
-    return { status: response.status, body: await response.json() };
-  };
 
   /** @param {number} at мілісекунди epoch, до яких треба дочекатися */
   const waitUntil = async (at) => {
