@@ -39,16 +39,30 @@ const run = (args, env) =>
  * Засіває базу статичними даними (`db:seed`) і запускає сервер на вільному
  * порту; повертає HTTP-клієнт до нього.
  *
- * @param {{ seedUrl: string, serverUrl?: string }} urls serverUrl — інша адреса
- *   тієї самої бази для сервера (наприклад, через проксі)
+ * @param {{ seedUrl: string, serverUrl?: string, seed?: boolean,
+ *   env?: NodeJS.ProcessEnv }} options serverUrl — інша адреса тієї самої
+ *   бази для сервера (наприклад, через проксі); seed: false — без db:seed
  */
-export async function startServer({ seedUrl, serverUrl = seedUrl }) {
+export async function startServer({
+  seedUrl,
+  serverUrl = seedUrl,
+  seed = true,
+  env = {},
+}) {
   const port = await freePort();
-  // користувачів через API не створюють: беремо статичних із db:seed
-  await run(['scripts/db.js', 'seed'], { ...process.env, CIVIC_DATABASE_URL: seedUrl });
+  if (seed) {
+    // користувачів через API не створюють: беремо статичних із db:seed
+    await run(['scripts/db.js', 'seed'], { ...process.env, CIVIC_DATABASE_URL: seedUrl });
+  }
   const server = spawn(process.execPath, ['src/server.js'], {
     cwd: ROOT,
-    env: { ...process.env, CIVIC_DATABASE_URL: serverUrl, PORT: String(port) },
+    env: {
+      ...process.env,
+      CIVIC_DATABASE_URL: serverUrl,
+      PORT: String(port),
+      CIVIC_SHUTDOWN_DELAY_MS: '0',
+      ...env,
+    },
     stdio: 'ignore',
   });
   const base = `http://127.0.0.1:${port}`;
@@ -86,10 +100,10 @@ export async function startServer({ seedUrl, serverUrl = seedUrl }) {
   for (let i = 0; i < 100; i += 1) {
     const ready = await fetch(`${base}/ready`).catch(() => null);
     if (ready?.ok) {
-      return { http, stop: () => server.kill() };
+      return { http, base, process: server, stop: () => server.kill() };
     }
     await sleep(100);
   }
   server.kill();
-  throw new Error('сервер не став готовим за 10 с');
+  throw new Error(`сервер не став готовим за 10 с (код виходу ${server.exitCode})`);
 }

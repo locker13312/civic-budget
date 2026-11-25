@@ -16,7 +16,7 @@ import { systemRoutes } from './routes/system.js';
  *   projectsService: import('../projects/index.js').ProjectsService,
  *   votingService: import('../voting/index.js').VotingService,
  *   resultsService: import('../results/index.js').ResultsService,
- *   readiness: { check(): Promise<void> },
+ *   readiness: import('../platform/index.js').Readiness,
  *   logger: import('pino').Logger,
  * }} Services
  */
