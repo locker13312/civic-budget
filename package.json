@@ -31,7 +31,9 @@
     "coverage": "node --test --test-reporter=spec --experimental-test-coverage --test-coverage-include=\"src/**\" --test-coverage-branches=80 \"test/**/*.test.js\"",
     "coverage:unit": "node --test --test-reporter=spec --experimental-test-coverage --test-coverage-include=\"src/results/domain.js\" --test-coverage-include=\"src/results/service.js\" --test-coverage-include=\"src/results/repository.memory.js\" --test-coverage-lines=100 --test-coverage-branches=100 --test-coverage-functions=100 \"test/unit/*.test.js\"",
     "mutation": "stryker run && node scripts/mutation-report.js",
-    "test:container": "node scripts/test-container.js"
+    "test:container": "node scripts/test-container.js",
+    "stage:check": "node scripts/stage-check.js",
+    "ci:protection": "node scripts/ci-protection.js"
   },
   "repository": {
     "type": "git",
@@ -72,6 +74,7 @@
     "globals": "^17.13.0",
     "knip": "^6.41.0",
     "prettier": "^3.9.10",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "yaml": "^2.9.1"
   }
 }
