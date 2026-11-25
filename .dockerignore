@@ -1,0 +1,15 @@
+# в образ ідуть лише package*.json, src/ і migrations/ (див. Dockerfile)
+.git
+.github
+.githooks
+.env
+node_modules
+dist
+reports
+coverage
+.stryker-tmp
+test
+tasks
+ai
+adr
+standards
