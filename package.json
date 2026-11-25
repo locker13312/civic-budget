@@ -57,6 +57,10 @@
     "postgres": "^3.4.9"
   },
   "devDependencies": {
+    "@commitlint/config-conventional": "^21.2.4",
+    "@commitlint/format": "^21.2.3",
+    "@commitlint/lint": "^21.2.4",
+    "@commitlint/load": "^21.2.4",
     "@eslint/js": "^10.0.1",
     "@stryker-mutator/core": "^10.1.1",
     "@stryker-mutator/tap-runner": "^10.1.1",

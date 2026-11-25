@@ -99,7 +99,7 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     repo.write(NEW_FILE, DIRTY);
     repo.git('add', NEW_FILE);
 
-    const blocked = repo.commit('dirty');
+    const blocked = repo.commit('feat: dirty');
 
     assert.notEqual(blocked.code, 0);
     assert.match(blocked.output, /коміт відхилено/);
@@ -108,7 +108,7 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     repo.write(NEW_FILE, CLEAN);
     repo.git('add', NEW_FILE);
 
-    const passed = repo.commit('clean');
+    const passed = repo.commit('feat: clean');
 
     assert.equal(passed.code, 0, passed.output);
   });
@@ -119,7 +119,7 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     repo.git('add', NEW_FILE);
     repo.write(NEW_FILE, DIRTY);
 
-    const result = repo.commit('staged is clean');
+    const result = repo.commit('feat: staged is clean');
 
     assert.equal(result.code, 0, result.output);
   });
@@ -130,7 +130,7 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     repo.git('add', NEW_FILE);
     repo.write(NEW_FILE, CLEAN);
 
-    const result = repo.commit('staged is dirty');
+    const result = repo.commit('feat: staged is dirty');
 
     assert.notEqual(result.code, 0);
     assert.match(result.output, /коміт відхилено/);
@@ -145,7 +145,7 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     // pre-commit пропускає (формат і лінтер чисті), ловить лише tsc
     repo.append(USED_FILE, TYPE_ERROR);
     repo.git('add', USED_FILE);
-    assert.equal(repo.commit('type error').code, 0);
+    assert.equal(repo.commit('feat: type error').code, 0);
 
     const rejected = repo.git('push', 'origin', 'main');
 
@@ -154,7 +154,7 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
 
     repo.git('checkout', 'HEAD~1', '--', USED_FILE);
     repo.git('add', USED_FILE);
-    assert.equal(repo.commit('fix types').code, 0);
+    assert.equal(repo.commit('fix: types').code, 0);
 
     const accepted = repo.git('push', 'origin', 'main');
 
@@ -166,9 +166,47 @@ describe('git-хуки', { skip: nested && 'вкладений запуск з �
     repo.write('src/voting/shortcut.js', SHORTCUT);
     repo.git('add', 'src/voting/shortcut.js');
 
-    const result = repo.commit('reach into projects internals');
+    const result = repo.commit('feat: reach into projects internals');
 
     assert.notEqual(result.code, 0);
     assert.match(result.output, /R2-index-only/);
+  });
+
+  test('[AC-4.3] commit-msg відхиляє повідомлення не у форматі conventional commits', () => {
+    const repo = sandbox();
+    repo.write(NEW_FILE, CLEAN);
+    repo.git('add', NEW_FILE);
+
+    const blocked = repo.commit('added sample file');
+
+    assert.notEqual(blocked.code, 0);
+    assert.match(blocked.output, /type may not be empty/);
+    assert.match(blocked.output, /commit-msg: коміт відхилено/);
+
+    const passed = repo.commit('feat(platform): add sample file');
+
+    assert.equal(passed.code, 0, passed.output);
+  });
+
+  test('[AC-4.3] задача commits перевіряє кожен коміт PR, а не лише останній', () => {
+    const repo = sandbox();
+    const base = repo.git('rev-parse', 'HEAD').output.trim();
+    repo.write(NEW_FILE, CLEAN);
+    repo.git('add', NEW_FILE);
+    // хук обходять через --no-verify; CI це ловить
+    repo.git('commit', '-q', '--no-verify', '-m', 'wip');
+    repo.append(NEW_FILE, '// ok\n');
+    repo.git('add', NEW_FILE);
+    assert.equal(repo.commit('fix: clean up sample').code, 0);
+    const head = repo.git('rev-parse', 'HEAD').output.trim();
+
+    const result = spawnSync(process.execPath, ['scripts/commitlint.js', base, head], {
+      cwd: join(repo.base, 'repo'),
+      encoding: 'utf8',
+    });
+
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /✖ [0-9a-f]{12}: wip/);
+    assert.match(result.stderr, /1 коміт\(ів\) не у форматі/);
   });
 });

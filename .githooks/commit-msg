@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# повідомлення коміту у форматі conventional commits (AC-4.3, adr/0013)
+set -euo pipefail
+if ! node scripts/commitlint.js --edit "$1"; then
+  echo "commit-msg: коміт відхилено" >&2
+  exit 1
+fi
