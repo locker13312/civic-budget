@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 
 import postgres from 'postgres';
 
-import { connectDb, migrate } from '../../src/platform/db/index.js';
+import { buildIndexes, connectDb, migrate } from '../../src/platform/db/index.js';
 import { createLogger } from '../../src/platform/index.js';
 
 export const ADMIN_URL =
@@ -67,7 +67,9 @@ function templateDatabase() {
       return null;
     }
     const db = await connectDb({ url: urlFor(name), logger: silent, max: 1 });
-    await migrate(db, silent);
+    await migrate(db, silent, 'schema');
+    await migrate(db, silent, 'data');
+    await buildIndexes(db, silent);
     await db.close();
     process.once('beforeExit', () => {
       void withAdmin((sql) => sql.unsafe(`drop database if exists ${name} with (force)`));
@@ -78,17 +80,23 @@ function templateDatabase() {
 }
 
 /**
- * Нова порожня мігрована база для одного тесту.
+ * Нова мігрована база для одного тесту; з empty — зовсім порожня, без
+ * таблиць (перевірити, як міграції застосовуються з нуля).
  *
+ * @param {{ empty?: boolean }} [options]
  * @returns {Promise<{ name: string, url: string, drop(): Promise<void> } | null>}
  */
-export async function createTestDatabase() {
+export async function createTestDatabase({ empty = false } = {}) {
   const source = await templateDatabase();
   if (!source) {
     return null;
   }
   const name = uniqueName('civic_test');
-  await withAdmin((sql) => sql.unsafe(`create database ${name} template ${source}`));
+  await withAdmin((sql) =>
+    sql.unsafe(
+      empty ? `create database ${name}` : `create database ${name} template ${source}`,
+    ),
+  );
   return {
     name,
     url: urlFor(name),

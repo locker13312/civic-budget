@@ -1,11 +1,16 @@
 name: check
 
 # хуки можна обійти через --no-verify, тому той самий npm run check іде на кожен PR;
-# Windows у матриці, бо студент працює на Windows (Git Bash)
+# Windows у матриці, бо студент працює на Windows (Git Bash).
+# Обов'язкові для мерджа (spec Завдання 4, scripts/ci-protection.js):
+# check (ubuntu-latest), commits, build. Коміт у main після зеленого CI → deploy.
 on:
   pull_request:
   push:
     branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   check:
@@ -72,3 +77,92 @@ jobs:
         with:
           name: mutation-report
           path: reports/mutation/
+
+  # кожен коміт PR у форматі conventional commits (AC-4.3), не лише останній
+  commits:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: setup
+        run: npm ci
+      - name: commitlint
+        run: >-
+          node scripts/commitlint.js ${{ github.event.pull_request.base.sha }}
+          ${{ github.event.pull_request.head.sha }}
+
+  # білд — це образ, який піде на стейдж: збирається, стартує проти чистої
+  # PostgreSQL, сам мігрує, /ready = 200 (AC-4.4); після перевірки — у GHCR
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: civic
+          POSTGRES_PASSWORD: civic
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U civic" --health-interval 2s --health-timeout 2s
+          --health-retries 15
+    env:
+      CIVIC_TEST_DATABASE_URL: postgres://civic:civic@127.0.0.1:55432/postgres
+      CIVIC_REQUIRE_DB: '1'
+      IMAGE: ghcr.io/${{ github.repository }}
+      GIT_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: setup
+        run: npm ci
+      - name: docker build
+        run: docker build --build-arg GIT_SHA="$GIT_SHA" -t "$IMAGE:$GIT_SHA" .
+      - name: container test
+        run: CIVIC_IMAGE="$IMAGE:$GIT_SHA" npm run test:container
+      # PR з форків не мають права писати в GHCR
+      - name: push to GHCR
+        if: >-
+          github.event_name == 'push' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker push "$IMAGE:$GIT_SHA"
+
+  # CD (AC-4.8): коміт у main після зеленого CI → стейдж. Раннер не має
+  # доступу до БД і SSH: лише deploy hook Render з тегом образу цього коміту,
+  # далі чекаємо, поки /version стейджу поверне цей sha
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: ${{ vars.STAGE_URL }}
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - name: deploy and wait for /version
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          STAGE_URL: ${{ vars.STAGE_URL }}
+          IMAGE: ghcr.io/${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: node scripts/deploy-stage.js

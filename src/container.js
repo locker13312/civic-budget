@@ -13,7 +13,8 @@ import {
   createMemoryIdentityRepository,
   createPgIdentityRepository,
 } from './identity/index.js';
-import { createLogger, systemClock } from './platform/index.js';
+import { countUsers } from './platform/db/index.js';
+import { createLogger, createReadiness, systemClock } from './platform/index.js';
 import {
   createMemoryProjectsRepository,
   createPgProjectsRepository,
@@ -29,6 +30,7 @@ import {
   createPgVotingRepository,
   createVotingService,
 } from './voting/index.js';
+import { seedStaticData } from './seed.js';
 
 /**
  * @typedef {'memory' | 'postgres'} Storage
@@ -70,7 +72,7 @@ export function buildContainer({
       projectsRepository: asFunction(createMemoryProjectsRepository).singleton(),
       votingRepository: asFunction(createMemoryVotingRepository).singleton(),
       resultsRepository: asFunction(createMemoryResultsRepository).singleton(),
-      readiness: asValue({ check: async () => {} }),
+      readiness: asValue(createReadiness(async () => {})),
     });
   } else {
     if (!db) {
@@ -83,7 +85,7 @@ export function buildContainer({
       projectsRepository: asFunction(createPgProjectsRepository).singleton(),
       votingRepository: asFunction(createPgVotingRepository).singleton(),
       resultsRepository: asFunction(createPgResultsRepository).singleton(),
-      readiness: asValue({ check: () => db.ping() }),
+      readiness: asValue(createReadiness(() => db.ping())),
     });
   }
 
@@ -96,4 +98,25 @@ export function buildContainer({
   });
 
   return /** @type {import('awilix').AwilixContainer<Cradle>} */ (container);
+}
+
+/**
+ * Статичні дані в PostgreSQL окремо від міграцій (spec Завдання 4): лише
+ * якщо користувачів ще немає, тож повторний запуск нічого не дублює.
+ *
+ * @param {import('./platform/db/index.js').Db} db
+ * @param {import('pino').Logger} logger
+ * @returns {Promise<boolean>} чи записано дані
+ */
+export async function seedIfEmpty(db, logger) {
+  const users = await countUsers(db);
+  if (users > 0) {
+    logger.info({ users }, 'статичні дані вже є, пропускаю');
+    return false;
+  }
+  const { cycles } = await seedStaticData(
+    buildContainer({ storage: 'postgres', db, logger }).cradle,
+  );
+  logger.info({ cycles: Object.keys(cycles).length }, 'статичні дані записано');
+  return true;
 }

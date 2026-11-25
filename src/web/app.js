@@ -16,7 +16,7 @@ import { systemRoutes } from './routes/system.js';
  *   projectsService: import('../projects/index.js').ProjectsService,
  *   votingService: import('../voting/index.js').VotingService,
  *   resultsService: import('../results/index.js').ResultsService,
- *   readiness: { check(): Promise<void> },
+ *   readiness: import('../platform/index.js').Readiness,
  *   logger: import('pino').Logger,
  * }} Services
  */
@@ -51,6 +51,15 @@ export function buildApp(services) {
       },
       'запит виконано',
     );
+  });
+
+  // під час зупинки keep-alive з'єднання не лишаються відкритими: інакше
+  // запит, що доробився після close(), тримав би сокет і процес не виходив
+  // би (знайшов тест blue-green, AC-4.7)
+  app.addHook('onSend', async (_request, reply) => {
+    if (services.readiness.draining) {
+      reply.header('connection', 'close');
+    }
   });
 
   systemRoutes(app, services);

@@ -6,6 +6,8 @@ import { existsSync } from 'node:fs';
  * @property {string | undefined} gitSha
  * @property {string} host
  * @property {number} port
+ * @property {boolean} seed записати статичні дані на старті (лише стейдж)
+ * @property {number} shutdownDelayMs скільки після SIGTERM `/ready` дає 503 до закриття
  */
 
 /**
@@ -26,6 +28,8 @@ export function loadSettings(env = process.env) {
     // лише локально: на Windows 0.0.0.0 викликає запит брандмауера
     host: env.HOST ?? '127.0.0.1',
     port: Number(env.PORT ?? 3000),
+    seed: env.SEED === '1',
+    shutdownDelayMs: Number(env.CIVIC_SHUTDOWN_DELAY_MS ?? 5000),
   });
 }
 

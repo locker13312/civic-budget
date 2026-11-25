@@ -21,7 +21,9 @@ export {
 } from './errors.js';
 export { fingerprint } from './fingerprint.js';
 export { createLogger } from './logger.js';
+export { createReadiness } from './readiness.js';
 
 /** @typedef {import('./clock.js').Clock} Clock */
 /** @typedef {import('./context.js').Initiator} Initiator */
 /** @typedef {import('./errors.js').ErrorKind} ErrorKind */
+/** @typedef {import('./readiness.js').Readiness} Readiness */
